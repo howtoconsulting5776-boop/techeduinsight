@@ -1,22 +1,97 @@
 import Link from 'next/link'
-import { createClient } from '@/app/lib/supabase/server'
+import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
 import ProjectGallery from '@/app/components/ProjectGallery'
-import type { ProjectWithProfile } from '@/app/lib/types'
+import type { ProjectGalleryItem, ProjectWithProfile } from '@/app/lib/types'
 
 export default async function HomePage() {
-  const supabase = await createClient()
+  const { supabase, user } = await getCachedSupabaseAuth()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  const { data: projects } = await supabase
+  const showcaseQuery = await supabase
     .from('projects')
     .select('*, profiles(display_name, avatar_url)')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
 
-  const items = (projects ?? []) as ProjectWithProfile[]
+  let items: ProjectWithProfile[]
+
+  if (showcaseQuery.error) {
+    const msg = showcaseQuery.error.message
+    const soft = /fetch|timeout|aborted|network|ECONNRESET|UND_ERR/i.test(msg)
+    if (soft) console.warn('[showcase] projects (network):', msg)
+    else console.error('[showcase] projects select failed:', msg)
+    const fallback = await supabase
+      .from('projects')
+      .select('*')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+    if (fallback.error) {
+      const msg = fallback.error.message
+      const soft = /fetch|timeout|aborted|network|ECONNRESET|UND_ERR/i.test(msg)
+      if (soft) console.warn('[showcase] projects fallback (network):', msg)
+      else console.error('[showcase] projects fallback failed:', msg)
+      items = []
+    } else {
+      items = (fallback.data ?? []).map((row) => ({
+        ...row,
+        profiles: { display_name: null, avatar_url: null },
+      })) as ProjectWithProfile[]
+    }
+  } else {
+    items = (showcaseQuery.data ?? []) as ProjectWithProfile[]
+  }
+  const ids = items.map((p) => p.id)
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') ?? ''
+
+  const countMap = new Map<string, { likes: number; comments: number; shares: number }>()
+  if (ids.length > 0) {
+    const { data: countRows, error: rpcErr } = await supabase.rpc('project_social_counts', {
+      p_ids: ids,
+    })
+    if (rpcErr) {
+      console.warn('[showcase] project_social_counts:', rpcErr.message)
+    } else {
+      for (const row of countRows ?? []) {
+        const r = row as {
+          project_id: string
+          likes_count: number
+          comments_count: number
+          share_count?: number
+        }
+        countMap.set(r.project_id, {
+          likes: Number(r.likes_count),
+          comments: Number(r.comments_count),
+          shares: Number(r.share_count ?? 0),
+        })
+      }
+    }
+  }
+
+  let likedIds = new Set<string>()
+  if (user && ids.length > 0) {
+    const { data: likeRows, error: likeErr } = await supabase
+      .from('project_likes')
+      .select('project_id')
+      .eq('user_id', user.id)
+      .in('project_id', ids)
+    if (likeErr) {
+      console.warn('[showcase] project_likes:', likeErr.message)
+    } else {
+      likedIds = new Set((likeRows ?? []).map((r) => r.project_id as string))
+    }
+  }
+
+  const galleryItems: ProjectGalleryItem[] = items.map((p) => {
+    const c = countMap.get(p.id) ?? { likes: 0, comments: 0, shares: 0 }
+    const share_url = site ? `${site}/projects/${p.id}` : `/projects/${p.id}`
+    return {
+      ...p,
+      likes_count: c.likes,
+      comments_count: c.comments,
+      share_count: c.shares,
+      liked_by_me: likedIds.has(p.id),
+      share_url,
+    }
+  })
 
   return (
     <>
@@ -48,7 +123,12 @@ export default async function HomePage() {
       </section>
 
       <main id="showcase" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 py-10">
-        <ProjectGallery projects={items} />
+        {showcaseQuery.error && items.length > 0 ? (
+          <p className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+            작성자 표시를 불러오지 못했습니다. 마이그레이션(프로필 공개 조회) 적용 여부를 확인하세요.
+          </p>
+        ) : null}
+        <ProjectGallery projects={galleryItems} />
       </main>
     </>
   )

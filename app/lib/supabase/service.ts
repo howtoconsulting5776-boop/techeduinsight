@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { fetchWithTimeout, SERVER_FETCH_TIMEOUT_MS } from '@/app/lib/supabase/fetch-timeout'
 import { getSupabaseUrl } from '@/app/lib/supabase/env'
 
 /**
@@ -13,5 +14,6 @@ export function createServiceRoleClient() {
   }
   return createClient(getSupabaseUrl(), key, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: fetchWithTimeout(SERVER_FETCH_TIMEOUT_MS) },
   })
 }

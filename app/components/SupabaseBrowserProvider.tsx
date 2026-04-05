@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { BROWSER_FETCH_TIMEOUT_MS, fetchWithTimeout } from '@/app/lib/supabase/fetch-timeout'
 
 const SupabaseBrowserContext = createContext<SupabaseClient | null>(null)
 
@@ -19,10 +20,25 @@ export function SupabaseBrowserProvider({
   anonKey: string
   children: ReactNode
 }) {
-  const client = useMemo(
-    () => createBrowserClient(url.trim(), anonKey.trim()),
-    [url, anonKey],
-  )
+  const client = useMemo(() => {
+    const browserFetch = fetchWithTimeout(BROWSER_FETCH_TIMEOUT_MS)
+    const devLock =
+      process.env.NODE_ENV === 'development'
+        ? {
+            auth: {
+              lock: async <R,>(
+                _name: string,
+                _acquireTimeout: number,
+                fn: () => Promise<R>,
+              ): Promise<R> => await fn(),
+            },
+          }
+        : {}
+    return createBrowserClient(url.trim(), anonKey.trim(), {
+      global: { fetch: browserFetch },
+      ...devLock,
+    })
+  }, [url, anonKey])
   return (
     <SupabaseBrowserContext.Provider value={client}>{children}</SupabaseBrowserContext.Provider>
   )

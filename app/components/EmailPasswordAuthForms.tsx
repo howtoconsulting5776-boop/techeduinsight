@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
 import { useSupabaseBrowser } from '@/app/components/SupabaseBrowserProvider'
 import { validateSignupDisplayName } from '@/app/lib/auth/display-name'
 import { Button } from '@/components/ui/button'
@@ -79,7 +78,6 @@ function safeRedirectPath(raw: string | null | undefined): string {
 /** 서버 액션 대신 브라우저에서 로그인 — Node→Supabase fetch 실패(fetch failed) 회피 */
 export function EmailPasswordLoginForm({ redirectTo = '' }: { redirectTo?: string }) {
   const supabase = useSupabaseBrowser()
-  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const nextPath = safeRedirectPath(redirectTo || null)
@@ -101,8 +99,8 @@ export function EmailPasswordLoginForm({ redirectTo = '' }: { redirectTo?: strin
         setError(mapSupabaseAuthError(err.message))
         return
       }
-      router.refresh()
-      router.push(nextPath)
+      // 전체 네비게이션으로 쿠키가 반드시 다음 요청(서버 액션·RSC)에 실리게 함
+      window.location.assign(nextPath)
     } finally {
       setPending(false)
     }
@@ -157,7 +155,6 @@ export function EmailPasswordSignupForm({
   onNeedsEmailConfirmation: () => void
 }) {
   const supabase = useSupabaseBrowser()
-  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const nextPath = safeRedirectPath(nextPathProp)
@@ -200,8 +197,7 @@ export function EmailPasswordSignupForm({
           setError(mapSupabaseAuthError(signInErr.message))
           return
         }
-        router.refresh()
-        router.push(nextPath)
+        window.location.assign(nextPath)
         return
       }
 
@@ -223,8 +219,7 @@ export function EmailPasswordSignupForm({
           return
         }
         if (data.session) {
-          router.refresh()
-          router.push(nextPath)
+          window.location.assign(nextPath)
           return
         }
         onNeedsEmailConfirmation()

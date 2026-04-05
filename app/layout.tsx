@@ -4,7 +4,7 @@ import Header from '@/app/components/Header'
 import Footer from '@/app/components/Footer'
 import { SupabaseBrowserProvider } from '@/app/components/SupabaseBrowserProvider'
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/app/lib/supabase/env'
-import { createClient } from '@/app/lib/supabase/server'
+import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
 import './globals.css'
 
 const inter = Inter({
@@ -28,10 +28,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { user } = await getCachedSupabaseAuth()
 
   const supabaseUrl = getSupabaseUrl()
   const supabaseAnonKey = getSupabaseAnonKey()

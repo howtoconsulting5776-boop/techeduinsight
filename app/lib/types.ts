@@ -21,11 +21,33 @@ export interface Project {
   tags: string[] | null
   status: ProjectStatus
   view_count: number
+  /** `project_share_events` 트리거로 누적 (012 마이그레이션) */
+  share_count?: number
   created_at: string
 }
 
 export interface ProjectWithProfile extends Project {
   profiles: Pick<Profile, 'display_name' | 'avatar_url'>
+}
+
+/** 쇼케이스 카드용: 좋아요·댓글 수 및 현재 사용자 좋아요 여부 */
+export interface ProjectGalleryItem extends ProjectWithProfile {
+  likes_count: number
+  comments_count: number
+  share_count: number
+  liked_by_me: boolean
+  share_url: string
+}
+
+export interface ProjectCommentRow {
+  id: string
+  project_id: string
+  /** 삭제 버튼(본인·관리자) 판별용 */
+  user_id: string
+  parent_id: string | null
+  body: string
+  author_display_name: string
+  created_at: string
 }
 
 export interface Video {

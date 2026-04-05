@@ -1,21 +1,23 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/app/lib/supabase/server'
+import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
 import { ProjectCardThumbnail } from '@/app/components/ProjectCardThumbnail'
+import { ProjectCommentForm } from '@/app/components/ProjectCommentForm'
+import { ProjectCommentThread } from '@/app/components/ProjectCommentThread'
+import { ProjectSocialBar } from '@/app/components/ProjectSocialBar'
 import { getThumbnailUrl } from '@/app/lib/storage'
-import type { ProjectWithProfile } from '@/app/lib/types'
+import type { ProjectCommentRow, ProjectWithProfile } from '@/app/lib/types'
 
 interface PageProps {
   params: Promise<{ id: string }>
 }
 
+/** 세션·댓글 등 사용자별 데이터가 섞이지 않도록 캐시 비활성화 */
+export const dynamic = 'force-dynamic'
+
 export default async function ProjectDetailPage({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { supabase, user } = await getCachedSupabaseAuth()
 
   const { data: project, error } = await supabase
     .from('projects')
@@ -28,10 +30,12 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const p = project as ProjectWithProfile
 
   let viewCount = p.view_count
-  const { error: incErr } = await supabase.rpc('increment_project_view', {
+  const { data: rpcViewCount, error: incErr } = await supabase.rpc('increment_project_view', {
     project_id: id,
   })
-  if (!incErr) {
+  if (!incErr && rpcViewCount != null && !Number.isNaN(Number(rpcViewCount))) {
+    viewCount = Number(rpcViewCount)
+  } else if (!incErr) {
     const { data: countRow } = await supabase
       .from('projects')
       .select('view_count')
@@ -41,7 +45,88 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   }
 
   const thumbUrl = getThumbnailUrl(p.thumbnail_path)
-  const author = p.profiles?.display_name ?? '알 수 없음'
+  const author =
+    typeof p.profiles?.display_name === 'string' && p.profiles.display_name.trim()
+      ? p.profiles.display_name.trim()
+      : '알 수 없음'
+
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') ?? ''
+  const shareUrl = site ? `${site}/projects/${id}` : `/projects/${id}`
+
+  const { count: likesCountRaw } = await supabase
+    .from('project_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('project_id', id)
+  const likesCount = likesCountRaw ?? 0
+
+  const { count: commentsCountRaw } = await supabase
+    .from('project_comments')
+    .select('*', { count: 'exact', head: true })
+    .eq('project_id', id)
+  const commentsCount = commentsCountRaw ?? 0
+
+  let likedByMe = false
+  if (user) {
+    const { data: likeRow } = await supabase
+      .from('project_likes')
+      .select('project_id')
+      .eq('project_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    likedByMe = !!likeRow
+  }
+
+  let viewerIsAdmin = false
+  if (user) {
+    const { data: me } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+    viewerIsAdmin = me?.role === 'ADMIN'
+  }
+
+  const commentQuery = await supabase
+    .from('project_comments')
+    .select('id, project_id, user_id, parent_id, body, author_display_name, created_at')
+    .eq('project_id', id)
+    .order('created_at', { ascending: true })
+
+  type CommentRowDb = {
+    id: string
+    project_id: string
+    user_id: string
+    parent_id?: string | null
+    body: string
+    author_display_name: string
+    created_at: string
+  }
+
+  let rawRows: CommentRowDb[] | null = commentQuery.data as CommentRowDb[] | null
+  if (commentQuery.error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[project comments] select with parent_id:', commentQuery.error.message)
+    }
+    const fb = await supabase
+      .from('project_comments')
+      .select('id, project_id, user_id, body, author_display_name, created_at')
+      .eq('project_id', id)
+      .order('created_at', { ascending: true })
+    rawRows = fb.error ? null : (fb.data as CommentRowDb[] | null)
+    if (fb.error && process.env.NODE_ENV === 'development') {
+      console.warn('[project comments] fallback select:', fb.error.message)
+    }
+  }
+
+  const comments: ProjectCommentRow[] = (rawRows ?? []).map((r) => ({
+    id: r.id as string,
+    project_id: r.project_id as string,
+    user_id: r.user_id as string,
+    parent_id: r.parent_id ?? null,
+    body: r.body as string,
+    author_display_name: r.author_display_name as string,
+    created_at: r.created_at as string,
+  }))
 
   return (
     <>
@@ -52,7 +137,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         >
           ← 갤러리로 돌아가기
         </Link>
-        {/* ── Hero thumbnail ── */}
+
         <div className="overflow-hidden rounded-xl border">
           {thumbUrl ? (
             <ProjectCardThumbnail src={thumbUrl} alt={p.title} />
@@ -61,7 +146,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* ── Meta ── */}
+        {/* ── 세부 정보 (제목·메타·설명) ── */}
         <div className="mt-6">
           <h1 className="text-3xl font-bold">{p.title}</h1>
 
@@ -79,7 +164,6 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             </span>
           </div>
 
-          {/* Tags */}
           {p.tags && p.tags.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-1.5">
               {p.tags.map((tag) => (
@@ -93,13 +177,24 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Description */}
           {p.description && (
             <p className="mt-6 leading-relaxed text-foreground/80">{p.description}</p>
           )}
         </div>
 
-        {/* ── Demo: logged-in only (PRD); iframe vs new-tab link fallback ── */}
+        {/* ── 좋아요·댓글·공유 (상세 페이지 URL 공유) ── */}
+        <div className="mt-6 overflow-hidden rounded-xl border">
+          <ProjectSocialBar
+            projectId={id}
+            shareUrl={shareUrl}
+            commentsHref="#comments"
+            initialLikesCount={likesCount}
+            initialLiked={likedByMe}
+            commentsCount={commentsCount}
+          />
+        </div>
+
+        {/* ── 프로젝트 체험 (댓글보다 위) ── */}
         {p.deploy_url && (
           <section className="mt-10">
             <h2 className="mb-4 text-xl font-semibold">프로젝트 체험</h2>
@@ -144,6 +239,40 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             )}
           </section>
         )}
+
+        {/* ── 댓글 (작성 순·답글 트리) ── */}
+        <section id="comments" className="mt-10 scroll-mt-24">
+          <h2 className="text-xl font-semibold">
+            댓글 {commentsCount > 0 ? `· ${commentsCount}` : ''}
+          </h2>
+
+          <div className="mt-4">
+            <ProjectCommentThread
+              comments={comments}
+              projectId={id}
+              userLoggedIn={!!user}
+              currentUserId={user?.id ?? null}
+              viewerIsAdmin={viewerIsAdmin}
+            />
+          </div>
+
+          <div className="mt-6 rounded-xl border border-dashed border-border bg-muted/20 p-4">
+            {user ? (
+              <ProjectCommentForm projectId={id} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                댓글을 남기려면{' '}
+                <Link
+                  href={`/login?redirectTo=${encodeURIComponent(`/projects/${id}#comments`)}`}
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  로그인
+                </Link>
+                하세요.
+              </p>
+            )}
+          </div>
+        </section>
       </main>
     </>
   )
