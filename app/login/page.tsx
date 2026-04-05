@@ -21,7 +21,12 @@ type ActionState = { error?: string } | null
 
 function oauthMessage(code: string | null): string | null {
   if (code === 'oauth') {
-    return 'Google 로그인에 실패했습니다. Supabase에서 Google Provider와 Redirect URL을 확인하세요.'
+    return (
+      'Google 로그인 설정을 확인하세요. (1) Supabase → Authentication → URL Configuration → Redirect URLs에 ' +
+      '「앱주소/auth/callback」을 그대로 추가 (예: http://localhost:3000/auth/callback). ' +
+      '브라우저 주소가 localhost인지 127.0.0.1인지에 따라 둘 다 넣거나, .env.local의 NEXT_PUBLIC_SITE_URL을 ' +
+      '실제로 여는 주소와 동일하게 맞추세요. (2) Google Provider Client ID/Secret 확인.'
+    )
   }
   return null
 }
