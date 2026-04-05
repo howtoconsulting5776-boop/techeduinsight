@@ -22,11 +22,8 @@ type ActionState = { error?: string } | null
 function oauthMessage(code: string | null): string | null {
   if (code === 'oauth') {
     return (
-      'Google 로그인이 거절되었습니다. Supabase → Authentication → URL Configuration에서 ' +
-      '「Site URL」이 반드시 앱 주소여야 합니다 (https://xxx.supabase.co 로 두면 안 됩니다). ' +
-      'Redirect URLs에 정확히 추가: http://localhost:3000/auth/callback (또는 사용 중인 도메인 동일). ' +
-      '가능하면 http://localhost:3000/** 도 추가해 보세요. .env.local의 NEXT_PUBLIC_SITE_URL은 ' +
-      '브라우저 주소창과 동일한 origin( localhost vs 127.0.0.1 구분 )으로 맞추세요.'
+      'Google 로그인에 실패했습니다. Supabase에서 Site URL을 앱 주소로 두고, Redirect URLs에 ' +
+      'http://localhost:3000/** (또는 배포 도메인/**) 를 추가하세요. NEXT_PUBLIC_SITE_URL도 같은 주소로 맞추세요.'
     )
   }
   return null
@@ -49,9 +46,7 @@ function LoginForm() {
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">로그인</CardTitle>
-          <CardDescription>
-            Google 계정으로 바로 로그인하거나, 이메일로 로그인하세요.
-          </CardDescription>
+          <CardDescription>Google 또는 이메일로 로그인하세요.</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">

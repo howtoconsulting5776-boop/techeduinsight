@@ -1,10 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { GoogleSignInForm } from '@/app/components/GoogleSignInForm'
 import { createClient } from '@/app/lib/supabase/client'
 import { logout } from '@/app/login/actions'
 
@@ -13,17 +11,8 @@ interface HeaderProps {
 }
 
 export default function Header({ initialUser = null }: HeaderProps) {
-  const pathname = usePathname()
   const [user, setUser] = useState<User | null>(initialUser)
   const [menuOpen, setMenuOpen] = useState(false)
-  const oauthNext =
-    pathname &&
-    pathname !== '/' &&
-    !pathname.startsWith('/login') &&
-    !pathname.startsWith('/signup') &&
-    !pathname.startsWith('/auth/')
-      ? pathname
-      : '/dashboard'
 
   useEffect(() => {
     const supabase = createClient()
@@ -87,9 +76,9 @@ export default function Header({ initialUser = null }: HeaderProps) {
             </Link>
           </nav>
 
-          <div className="mt-2 flex flex-col gap-2 border-t border-border pt-2 md:mt-0 md:ml-2 md:flex-row md:items-center md:border-t-0 md:border-l md:pl-2 md:pt-0">
+          <div className="mt-2 border-t border-border pt-2 md:mt-0 md:ml-2 md:border-t-0 md:border-l md:pl-2 md:pt-0">
             {user ? (
-              <form action={logout} className="w-full md:w-auto">
+              <form action={logout}>
                 <button
                   type="submit"
                   className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted md:w-auto md:px-3 md:py-1.5"
@@ -98,18 +87,13 @@ export default function Header({ initialUser = null }: HeaderProps) {
                 </button>
               </form>
             ) : (
-              <>
-                <div className="w-full md:w-auto">
-                  <GoogleSignInForm nextPath={oauthNext} variant="inline" />
-                </div>
-                <Link
-                  href={`/login?redirectTo=${encodeURIComponent(oauthNext)}`}
-                  className="block w-full rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 md:w-auto md:py-1.5"
-                  onClick={closeMenu}
-                >
-                  이메일 로그인
-                </Link>
-              </>
+              <Link
+                href="/login"
+                className="block w-full rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 md:w-auto md:px-3 md:py-1.5"
+                onClick={closeMenu}
+              >
+                로그인
+              </Link>
             )}
           </div>
         </div>

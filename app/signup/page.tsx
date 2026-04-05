@@ -62,10 +62,7 @@ function SignupForm() {
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">회원가입</CardTitle>
-          <CardDescription>
-            Google로 바로 시작하거나, 이메일로 계정을 만듭니다. (Google은 별도 비밀번호 없이 가입·로그인
-            됩니다.)
-          </CardDescription>
+          <CardDescription>Google 또는 이메일로 가입할 수 있습니다.</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
