@@ -173,13 +173,10 @@ export async function adminDeleteVideo(
   const ctx = await getAdminClientOrNull()
   if (!ctx) return { ok: false, error: '권한이 없습니다.' }
 
-  const { data: row } = await ctx.supabase
-    .from('videos')
-    .select('thumbnail_path')
-    .eq('id', id)
-    .maybeSingle()
+  const { data: row } = await ctx.supabase.from('videos').select('*').eq('id', id).maybeSingle()
 
-  const thumbPath = (row?.thumbnail_path as string | null | undefined)?.trim() || null
+  const thumbPath =
+    (row as { thumbnail_path?: string | null } | null)?.thumbnail_path?.trim() || null
 
   const { error } = await ctx.supabase.from('videos').delete().eq('id', id)
   if (error) return { ok: false, error: error.message }

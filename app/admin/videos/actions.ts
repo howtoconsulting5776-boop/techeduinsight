@@ -2,6 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/app/lib/supabase/server'
+import {
+  isMissingVideosThumbnailColumnError,
+  VIDEO_THUMB_MIGRATION_HINT,
+} from '@/app/lib/supabase/schema-errors'
 import type { VideoRole } from '@/app/lib/types'
 
 type ActionResult = { error: string } | null
@@ -95,6 +99,11 @@ export async function createLectureVideoAction(
         .eq('id', videoId)
       if (upErr) {
         await removeThumbnailIfPresent(supabase, path)
+        if (isMissingVideosThumbnailColumnError(upErr.message)) {
+          return {
+            error: `썸네일을 저장할 수 없습니다. ${VIDEO_THUMB_MIGRATION_HINT} 영상 자체는 등록되어 있습니다.`,
+          }
+        }
         return { error: `썸네일 DB 반영 실패: ${upErr.message}` }
       }
     } catch (e) {
@@ -133,13 +142,18 @@ export async function updateLectureVideoAction(
     return { error: '제목과 YouTube ID는 필수입니다.' }
   }
 
-  const { data: current } = await supabase
+  const { data: current, error: curErr } = await supabase
     .from('videos')
-    .select('thumbnail_path')
+    .select('*')
     .eq('id', id)
     .single()
 
-  const previousPath = (current?.thumbnail_path as string | null) ?? null
+  if (curErr) {
+    return { error: curErr.message }
+  }
+
+  const previousPath =
+    (current as { thumbnail_path?: string | null } | null)?.thumbnail_path ?? null
   let nextPath: string | null = previousPath
 
   if (removeThumb && (!thumbFile || thumbFile.size === 0)) {
@@ -155,18 +169,43 @@ export async function updateLectureVideoAction(
     }
   }
 
-  const { error: upErr } = await supabase
-    .from('videos')
-    .update({
-      title,
-      youtube_id: youtubeId,
-      category,
-      required_role: requiredRole as VideoRole,
-      sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
-      duration_sec: durationSec != null && Number.isFinite(durationSec) ? durationSec : null,
-      thumbnail_path: nextPath,
-    })
-    .eq('id', id)
+  const baseUpdate = {
+    title,
+    youtube_id: youtubeId,
+    category,
+    required_role: requiredRole as VideoRole,
+    sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
+    duration_sec: durationSec != null && Number.isFinite(durationSec) ? durationSec : null,
+  }
+
+  let upErr = (
+    await supabase
+      .from('videos')
+      .update({
+        ...baseUpdate,
+        thumbnail_path: nextPath,
+      })
+      .eq('id', id)
+  ).error
+
+  if (upErr && isMissingVideosThumbnailColumnError(upErr.message)) {
+    if (
+      thumbFile &&
+      typeof thumbFile === 'object' &&
+      thumbFile.size > 0 &&
+      nextPath &&
+      nextPath !== previousPath
+    ) {
+      await removeThumbnailIfPresent(supabase, nextPath)
+    }
+    const retry = await supabase.from('videos').update(baseUpdate).eq('id', id)
+    if (retry.error) {
+      return { error: retry.error.message }
+    }
+    return {
+      error: `썸네일은 아직 DB에 반영되지 않았습니다. ${VIDEO_THUMB_MIGRATION_HINT} 나머지 정보는 저장되었습니다.`,
+    }
+  }
 
   if (upErr) {
     if (
