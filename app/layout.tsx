@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Geist_Mono, Inter } from 'next/font/google'
 import Header from '@/app/components/Header'
 import Footer from '@/app/components/Footer'
+import { SupabaseBrowserProvider } from '@/app/components/SupabaseBrowserProvider'
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/app/lib/supabase/env'
 import { createClient } from '@/app/lib/supabase/server'
 import './globals.css'
 
@@ -31,12 +33,17 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser()
 
+  const supabaseUrl = getSupabaseUrl()
+  const supabaseAnonKey = getSupabaseAnonKey()
+
   return (
     <html lang="ko" className={`${inter.variable} ${geistMono.variable} h-full`}>
       <body className="flex min-h-full flex-col font-sans">
-        <Header initialUser={user} />
-        <div className="flex-1">{children}</div>
-        <Footer />
+        <SupabaseBrowserProvider url={supabaseUrl} anonKey={supabaseAnonKey}>
+          <Header initialUser={user} />
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </SupabaseBrowserProvider>
       </body>
     </html>
   )

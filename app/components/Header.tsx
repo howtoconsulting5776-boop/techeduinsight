@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { createClient } from '@/app/lib/supabase/client'
+import { useSupabaseBrowser } from '@/app/components/SupabaseBrowserProvider'
 import { logout } from '@/app/login/actions'
 
 interface HeaderProps {
@@ -11,11 +11,11 @@ interface HeaderProps {
 }
 
 export default function Header({ initialUser = null }: HeaderProps) {
+  const supabase = useSupabaseBrowser()
   const [user, setUser] = useState<User | null>(initialUser)
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user ?? null)
     })
@@ -23,7 +23,7 @@ export default function Header({ initialUser = null }: HeaderProps) {
       setUser(session?.user ?? null)
     })
     return () => sub.subscription.unsubscribe()
-  }, [])
+  }, [supabase])
 
   const closeMenu = () => setMenuOpen(false)
 
