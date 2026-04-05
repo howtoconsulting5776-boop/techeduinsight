@@ -3,9 +3,13 @@
 import { useFormStatus } from 'react-dom'
 import { signInWithGoogle } from '@/app/auth/actions'
 
-function GoogleMark() {
+export function GoogleLogoMark({ className }: { className?: string }) {
   return (
-    <svg className="size-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
+    <svg
+      className={className ?? 'size-5 shrink-0'}
+      viewBox="0 0 24 24"
+      aria-hidden
+    >
       <path
         fill="#4285F4"
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -26,27 +30,44 @@ function GoogleMark() {
   )
 }
 
-function GoogleSubmitButton() {
+function GoogleSubmitButton({
+  variant,
+}: {
+  variant: 'full' | 'inline'
+}) {
   const { pending } = useFormStatus()
+  const isInline = variant === 'inline'
   return (
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+      className={
+        isInline
+          ? 'inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50 md:w-auto'
+          : 'inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50'
+      }
     >
-      <GoogleMark />
-      {pending ? 'Google 연결 중…' : 'Google로 계속하기'}
+      <GoogleLogoMark className="size-[18px] shrink-0 md:size-5" />
+      {pending
+        ? '연결 중…'
+        : isInline
+          ? 'Google 로그인'
+          : 'Google로 계속하기'}
     </button>
   )
 }
 
+/**
+ * Supabase Auth `signInWithOAuth({ provider: 'google' })` — 서버 액션 `signInWithGoogle` 사용.
+ */
 export function GoogleSignInForm({
-  nextPath,
+  nextPath = '/dashboard',
   className,
+  variant = 'full',
 }: {
-  /** 로그인 후 이동할 경로 (항상 / 로 시작) */
-  nextPath: string
+  nextPath?: string
   className?: string
+  variant?: 'full' | 'inline'
 }) {
   const safeNext =
     nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/dashboard'
@@ -54,7 +75,7 @@ export function GoogleSignInForm({
   return (
     <form action={signInWithGoogle} className={className ?? 'w-full'}>
       <input type="hidden" name="next" value={safeNext} />
-      <GoogleSubmitButton />
+      <GoogleSubmitButton variant={variant} />
     </form>
   )
 }

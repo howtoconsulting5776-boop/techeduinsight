@@ -22,10 +22,11 @@ type ActionState = { error?: string } | null
 function oauthMessage(code: string | null): string | null {
   if (code === 'oauth') {
     return (
-      'Google 로그인 설정을 확인하세요. (1) Supabase → Authentication → URL Configuration → Redirect URLs에 ' +
-      '「앱주소/auth/callback」을 그대로 추가 (예: http://localhost:3000/auth/callback). ' +
-      '브라우저 주소가 localhost인지 127.0.0.1인지에 따라 둘 다 넣거나, .env.local의 NEXT_PUBLIC_SITE_URL을 ' +
-      '실제로 여는 주소와 동일하게 맞추세요. (2) Google Provider Client ID/Secret 확인.'
+      'Google 로그인이 거절되었습니다. Supabase → Authentication → URL Configuration에서 ' +
+      '「Site URL」이 반드시 앱 주소여야 합니다 (https://xxx.supabase.co 로 두면 안 됩니다). ' +
+      'Redirect URLs에 정확히 추가: http://localhost:3000/auth/callback (또는 사용 중인 도메인 동일). ' +
+      '가능하면 http://localhost:3000/** 도 추가해 보세요. .env.local의 NEXT_PUBLIC_SITE_URL은 ' +
+      '브라우저 주소창과 동일한 origin( localhost vs 127.0.0.1 구분 )으로 맞추세요.'
     )
   }
   return null
