@@ -12,6 +12,8 @@ export interface LectureListItem {
   sort_order: number
   duration_sec: number | null
   required_role: VideoRole
+  /** Public URL for custom lecture thumbnail, or null for default placeholder */
+  thumbnailUrl: string | null
   href: string
   locked: boolean
   showPremiumBadge: boolean
@@ -70,15 +72,29 @@ export default function LectureCatalog({ items }: { items: LectureListItem[] }) 
             }`}
           >
             <div
-              className={`relative flex h-36 items-center justify-center bg-gradient-to-br from-slate-800 to-slate-600 ${
+              className={`relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-slate-800 to-slate-600 ${
                 item.locked ? 'brightness-[0.45]' : ''
               }`}
             >
-              {item.locked ? (
-                <Lock className="size-10 text-white/90 drop-shadow-md" aria-hidden />
-              ) : (
-                <span className="text-4xl font-bold text-white/30">▶</span>
-              )}
+              {item.thumbnailUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.thumbnailUrl}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : null}
+              <div
+                className={`relative z-[1] flex h-full w-full items-center justify-center ${
+                  item.thumbnailUrl ? 'bg-black/35' : ''
+                }`}
+              >
+                {item.locked ? (
+                  <Lock className="size-10 text-white/90 drop-shadow-md" aria-hidden />
+                ) : (
+                  <span className="text-4xl font-bold text-white/30 drop-shadow-sm">▶</span>
+                )}
+              </div>
               {item.showPremiumBadge ? (
                 <span className="absolute right-2 top-2 rounded bg-amber-500/90 px-2 py-0.5 text-xs font-semibold text-white">
                   PREMIUM

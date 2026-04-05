@@ -16,13 +16,25 @@ export default async function EditProjectPage({ params }: PageProps) {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  const viewerIsAdmin = profile?.role === 'ADMIN'
+
   const { data: row, error } = await supabase.from('projects').select('*').eq('id', id).single()
 
   if (error || !row) notFound()
 
   const project = row as Project
-  if (project.owner_id !== user.id) redirect('/dashboard/projects')
-  if (project.status !== 'draft') redirect('/dashboard/projects')
+  if (project.owner_id !== user.id && !viewerIsAdmin) redirect('/dashboard/projects')
 
-  return <EditProjectForm project={project} />
+  return (
+    <EditProjectForm
+      project={project}
+      viewerIsAdmin={viewerIsAdmin}
+      cancelHref={viewerIsAdmin ? '/admin/projects' : '/dashboard/projects'}
+    />
+  )
 }

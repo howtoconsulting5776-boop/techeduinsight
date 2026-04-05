@@ -135,19 +135,12 @@ export default async function MyProjectsPage() {
                       >
                         공개 상세 보기 →
                       </Link>
-                      {project.status === 'draft' ? (
-                        <Link
-                          href={`/dashboard/projects/${project.id}/edit`}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"
-                        >
-                          초안 편집
-                        </Link>
-                      ) : (
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          공개된 프로젝트는 여기서 수정할 수 없습니다. 변경이 필요하면 관리자에게
-                          요청하세요.
-                        </p>
-                      )}
+                      <Link
+                        href={`/dashboard/projects/${project.id}/edit`}
+                        className="text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"
+                      >
+                        {project.status === 'draft' ? '초안 편집' : '프로젝트 수정'}
+                      </Link>
                     </div>
                   </div>
                 </div>

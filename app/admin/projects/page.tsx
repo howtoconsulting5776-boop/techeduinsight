@@ -1,8 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import {
   adminListProjects,
+  adminDeleteProject,
   adminSetProjectPublished,
   adminSetProjectIframeAllowed,
   type AdminProjectRow,
@@ -14,6 +16,8 @@ const btnSecondary =
   'inline-flex items-center justify-center rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50'
 const btnOutline =
   'inline-flex items-center justify-center rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50'
+const btnDanger =
+  'inline-flex items-center justify-center rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50'
 
 export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<AdminProjectRow[]>([])
@@ -53,6 +57,19 @@ export default function AdminProjectsPage() {
     setBusyId(id)
     setError(null)
     const res = await adminSetProjectIframeAllowed(id, next)
+    setBusyId(null)
+    if (!res.ok) {
+      setError(res.error)
+      return
+    }
+    void load()
+  }
+
+  async function handleDeleteProject(id: string) {
+    if (!confirm('이 프로젝트를 삭제할까요? 되돌릴 수 없습니다.')) return
+    setBusyId(id)
+    setError(null)
+    const res = await adminDeleteProject(id)
     setBusyId(null)
     if (!res.ok) {
       setError(res.error)
@@ -141,6 +158,20 @@ export default function AdminProjectsPage() {
                     onClick={() => void toggleIframe(p.id, !p.iframe_allowed)}
                   >
                     iframe {p.iframe_allowed ? '차단' : '허용'}
+                  </button>
+                  <Link
+                    href={`/dashboard/projects/${p.id}/edit`}
+                    className={btnOutline + ' inline-block'}
+                  >
+                    내용 편집
+                  </Link>
+                  <button
+                    type="button"
+                    className={btnDanger}
+                    disabled={busyId === p.id}
+                    onClick={() => void handleDeleteProject(p.id)}
+                  >
+                    삭제
                   </button>
                 </td>
               </tr>

@@ -4,6 +4,15 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/app/lib/supabase/server'
 
+async function viewerIsAdmin(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single()
+  return profile?.role === 'ADMIN'
+}
+
 export async function updateProject(
   _prevState: { error?: string } | null,
   formData: FormData,
@@ -15,6 +24,8 @@ export async function updateProject(
   } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  const admin = await viewerIsAdmin(supabase, user.id)
 
   const id = (formData.get('id') as string)?.trim()
   if (!id) return { error: '프로젝트를 찾을 수 없습니다.' }
@@ -46,7 +57,7 @@ export async function updateProject(
     thumbnailPath = filePath
   }
 
-  const { data: updated, error } = await supabase
+  let updateQuery = supabase
     .from('projects')
     .update({
       title,
@@ -56,20 +67,25 @@ export async function updateProject(
       thumbnail_path: thumbnailPath,
     })
     .eq('id', id)
-    .eq('owner_id', user.id)
-    .select('id')
-    .maybeSingle()
+
+  if (!admin) {
+    updateQuery = updateQuery.eq('owner_id', user.id)
+  }
+
+  const { data: updated, error } = await updateQuery.select('id').maybeSingle()
 
   if (error) {
     return { error: `저장 실패: ${error.message}` }
   }
   if (!updated) {
-    return { error: '수정할 수 없습니다. 초안 상태인지 확인하세요.' }
+    return { error: '수정할 수 없습니다. 권한이 있는지 확인하세요.' }
   }
 
   revalidatePath('/dashboard/projects')
+  revalidatePath('/admin/projects')
   revalidatePath(`/projects/${id}`)
-  redirect('/dashboard/projects')
+  revalidatePath('/')
+  redirect(admin ? '/admin/projects' : '/dashboard/projects')
 }
 
 export async function deleteProject(formData: FormData) {
@@ -81,22 +97,25 @@ export async function deleteProject(formData: FormData) {
 
   if (!user) redirect('/login')
 
-  const id = (formData.get('id') as string)?.trim()
-  if (!id) redirect('/dashboard/projects')
+  const admin = await viewerIsAdmin(supabase, user.id)
 
-  const { data: removed } = await supabase
-    .from('projects')
-    .delete()
-    .eq('id', id)
-    .eq('owner_id', user.id)
-    .select('id')
-    .maybeSingle()
+  const id = (formData.get('id') as string)?.trim()
+  if (!id) redirect(admin ? '/admin/projects' : '/dashboard/projects')
+
+  let deleteQuery = supabase.from('projects').delete().eq('id', id)
+  if (!admin) {
+    deleteQuery = deleteQuery.eq('owner_id', user.id)
+  }
+
+  const { data: removed } = await deleteQuery.select('id').maybeSingle()
 
   if (!removed) {
-    redirect('/dashboard/projects')
+    redirect(admin ? '/admin/projects' : '/dashboard/projects')
   }
 
   revalidatePath('/dashboard/projects')
+  revalidatePath('/admin/projects')
+  revalidatePath(`/projects/${id}`)
   revalidatePath('/')
-  redirect('/dashboard/projects')
+  redirect(admin ? '/admin/projects' : '/dashboard/projects')
 }

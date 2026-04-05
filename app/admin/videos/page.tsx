@@ -1,12 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import {
-  adminListVideos,
-  adminCreateVideo,
-  adminUpdateVideo,
-  adminDeleteVideo,
-} from '@/app/admin/actions'
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
+import { adminListVideos, adminDeleteVideo } from '@/app/admin/actions'
+import { createLectureVideoAction, updateLectureVideoAction } from '@/app/admin/videos/actions'
+import { getThumbnailUrl } from '@/app/lib/storage'
 import type { Video } from '@/app/lib/types'
 import type { VideoRole } from '@/app/lib/types'
 
@@ -19,32 +16,25 @@ const btnSecondary =
 const btnDanger =
   'inline-flex items-center justify-center rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50'
 
-type FormState = {
-  title: string
-  youtube_id: string
-  category: string
-  required_role: VideoRole
-  sort_order: string
-  duration_sec: string
-}
+type ActionState = { error: string } | null
 
-const emptyForm: FormState = {
-  title: '',
-  youtube_id: '',
-  category: '',
-  required_role: 'MEMBER',
-  sort_order: '0',
-  duration_sec: '',
+function thumbPreview(path: string | null | undefined): string | null {
+  return getThumbnailUrl(path ?? null)
 }
 
 export default function AdminVideosPage() {
   const [videos, setVideos] = useState<Video[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [form, setForm] = useState<FormState>(emptyForm)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<FormState>(emptyForm)
   const [busy, setBusy] = useState(false)
+
+  const [createState, createAction, createPending] = useActionState<ActionState, FormData>(
+    createLectureVideoAction,
+    null,
+  )
+  const createFormRef = useRef<HTMLFormElement>(null)
+  const prevCreatePending = useRef(false)
 
   const load = useCallback(async () => {
     setError(null)
@@ -62,69 +52,13 @@ export default function AdminVideosPage() {
     void load()
   }, [load])
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault()
-    setBusy(true)
-    setError(null)
-    const sort = Number.parseInt(form.sort_order, 10)
-    const dur =
-      form.duration_sec.trim() === ''
-        ? null
-        : Number.parseInt(form.duration_sec, 10)
-    const res = await adminCreateVideo({
-      title: form.title,
-      youtube_id: form.youtube_id,
-      category: form.category.trim() || null,
-      required_role: form.required_role,
-      sort_order: Number.isFinite(sort) ? sort : 0,
-      duration_sec: dur != null && Number.isFinite(dur) ? dur : null,
-    })
-    setBusy(false)
-    if (!res.ok) {
-      setError(res.error)
-      return
+  useEffect(() => {
+    if (prevCreatePending.current && !createPending && createState === null) {
+      createFormRef.current?.reset()
+      void load()
     }
-    setForm(emptyForm)
-    void load()
-  }
-
-  function startEdit(v: Video) {
-    setEditingId(v.id)
-    setEditForm({
-      title: v.title,
-      youtube_id: v.youtube_id,
-      category: v.category ?? '',
-      required_role: v.required_role,
-      sort_order: String(v.sort_order),
-      duration_sec: v.duration_sec != null ? String(v.duration_sec) : '',
-    })
-  }
-
-  async function saveEdit() {
-    if (!editingId) return
-    setBusy(true)
-    setError(null)
-    const sort = Number.parseInt(editForm.sort_order, 10)
-    const dur =
-      editForm.duration_sec.trim() === ''
-        ? null
-        : Number.parseInt(editForm.duration_sec, 10)
-    const res = await adminUpdateVideo(editingId, {
-      title: editForm.title,
-      youtube_id: editForm.youtube_id,
-      category: editForm.category.trim() || null,
-      required_role: editForm.required_role,
-      sort_order: Number.isFinite(sort) ? sort : 0,
-      duration_sec: dur != null && Number.isFinite(dur) ? dur : null,
-    })
-    setBusy(false)
-    if (!res.ok) {
-      setError(res.error)
-      return
-    }
-    setEditingId(null)
-    void load()
-  }
+    prevCreatePending.current = createPending
+  }, [createPending, createState, load])
 
   async function handleDelete(id: string) {
     if (!confirm('이 영상을 삭제할까요?')) return
@@ -149,80 +83,68 @@ export default function AdminVideosPage() {
       <div>
         <h1 className="text-2xl font-bold">영상 관리</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          강의 목록에 노출되는 영상을 등록·수정·삭제합니다.
+          강의 목록에 노출되는 영상을 등록·수정·삭제합니다. 카드 썸네일은 아래에서 이미지를 올리면 강의 페이지에
+          표시됩니다.
         </p>
       </div>
 
       {error ? (
-        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
+        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       ) : null}
 
       <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-semibold">새 영상 등록</h2>
-        <form onSubmit={handleCreate} className="mt-4 grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm">
-            <span className="font-medium">제목</span>
-            <input
-              className={inputClass}
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              required
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="font-medium">YouTube ID</span>
-            <input
-              className={inputClass}
-              value={form.youtube_id}
-              onChange={(e) => setForm((f) => ({ ...f, youtube_id: e.target.value }))}
-              required
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="font-medium">카테고리</span>
-            <input
-              className={inputClass}
-              value={form.category}
-              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="font-medium">필요 등급</span>
-            <select
-              className={inputClass}
-              value={form.required_role}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, required_role: e.target.value as VideoRole }))
-              }
-            >
-              <option value="MEMBER">MEMBER</option>
-              <option value="PREMIUM">PREMIUM</option>
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="font-medium">순서</span>
-            <input
-              type="number"
-              className={inputClass}
-              value={form.sort_order}
-              onChange={(e) => setForm((f) => ({ ...f, sort_order: e.target.value }))}
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="font-medium">길이(초)</span>
-            <input
-              type="number"
-              className={inputClass}
-              value={form.duration_sec}
-              onChange={(e) => setForm((f) => ({ ...f, duration_sec: e.target.value }))}
-            />
-          </label>
-          <div className="sm:col-span-2">
-            <button type="submit" className={btnPrimary} disabled={busy}>
-              등록
-            </button>
+        <form ref={createFormRef} action={createAction} encType="multipart/form-data" className="mt-4">
+          {createState?.error ? (
+            <p className="mb-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {createState.error}
+            </p>
+          ) : null}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm">
+              <span className="font-medium">제목</span>
+              <input className={inputClass} name="title" required />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">YouTube ID</span>
+              <input className={inputClass} name="youtube_id" required />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">카테고리</span>
+              <input className={inputClass} name="category" />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">필요 등급</span>
+              <select className={inputClass} name="required_role" defaultValue="MEMBER">
+                <option value="MEMBER">MEMBER</option>
+                <option value="PREMIUM">PREMIUM</option>
+              </select>
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">순서</span>
+              <input type="number" className={inputClass} name="sort_order" defaultValue={0} />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">길이(초)</span>
+              <input type="number" className={inputClass} name="duration_sec" />
+            </label>
+            <label className="block text-sm sm:col-span-2">
+              <span className="font-medium">강의 썸네일 (선택)</span>
+              <input
+                className={`${inputClass} cursor-pointer file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm`}
+                name="thumbnail"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+              />
+              <span className="mt-1 block text-xs text-muted-foreground">
+                JPG, PNG, WebP, GIF 권장. 업로드하지 않으면 강의 카드에 기본 배경이 표시됩니다.
+              </span>
+            </label>
+            <div className="sm:col-span-2">
+              <button type="submit" className={btnPrimary} disabled={createPending}>
+                {createPending ? '등록 중…' : '등록'}
+              </button>
+            </div>
           </div>
         </form>
       </section>
@@ -230,9 +152,10 @@ export default function AdminVideosPage() {
       <section>
         <h2 className="mb-4 text-lg font-semibold">등록된 영상</h2>
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[800px] text-left text-sm">
+          <table className="w-full min-w-[960px] text-left text-sm">
             <thead className="border-b border-border bg-muted/50">
               <tr>
+                <th className="px-3 py-2 font-semibold">썸네일</th>
                 <th className="px-3 py-2 font-semibold">제목</th>
                 <th className="px-3 py-2 font-semibold">YouTube ID</th>
                 <th className="px-3 py-2 font-semibold">카테고리</th>
@@ -245,85 +168,36 @@ export default function AdminVideosPage() {
             <tbody>
               {videos.map((v) =>
                 editingId === v.id ? (
-                  <tr key={v.id} className="border-b border-border bg-muted/20">
-                    <td className="px-3 py-2">
-                      <input
-                        className="w-full rounded border border-input px-2 py-1 text-xs"
-                        value={editForm.title}
-                        onChange={(e) =>
-                          setEditForm((f) => ({ ...f, title: e.target.value }))
-                        }
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        className="w-full rounded border border-input px-2 py-1 text-xs"
-                        value={editForm.youtube_id}
-                        onChange={(e) =>
-                          setEditForm((f) => ({ ...f, youtube_id: e.target.value }))
-                        }
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        className="w-full rounded border border-input px-2 py-1 text-xs"
-                        value={editForm.category}
-                        onChange={(e) =>
-                          setEditForm((f) => ({ ...f, category: e.target.value }))
-                        }
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <select
-                        className="w-full rounded border border-input px-2 py-1 text-xs"
-                        value={editForm.required_role}
-                        onChange={(e) =>
-                          setEditForm((f) => ({
-                            ...f,
-                            required_role: e.target.value as VideoRole,
-                          }))
-                        }
-                      >
-                        <option value="MEMBER">MEMBER</option>
-                        <option value="PREMIUM">PREMIUM</option>
-                      </select>
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        className="w-16 rounded border border-input px-2 py-1 text-xs"
-                        value={editForm.sort_order}
-                        onChange={(e) =>
-                          setEditForm((f) => ({ ...f, sort_order: e.target.value }))
-                        }
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        className="w-16 rounded border border-input px-2 py-1 text-xs"
-                        value={editForm.duration_sec}
-                        onChange={(e) =>
-                          setEditForm((f) => ({ ...f, duration_sec: e.target.value }))
-                        }
-                      />
-                    </td>
-                    <td className="space-x-2 px-3 py-2 whitespace-nowrap">
-                      <button type="button" className={btnPrimary} onClick={saveEdit} disabled={busy}>
-                        저장
-                      </button>
-                      <button
-                        type="button"
-                        className={btnSecondary}
-                        onClick={() => setEditingId(null)}
-                        disabled={busy}
-                      >
-                        취소
-                      </button>
-                    </td>
-                  </tr>
+                  <EditVideoRow
+                    key={v.id}
+                    video={v}
+                    onCancel={() => setEditingId(null)}
+                    onSuccess={() => {
+                      setEditingId(null)
+                      void load()
+                    }}
+                    btnPrimary={btnPrimary}
+                    btnSecondary={btnSecondary}
+                    inputClass={inputClass}
+                  />
                 ) : (
                   <tr key={v.id} className="border-b border-border">
+                    <td className="px-3 py-2">
+                      <div className="relative h-14 w-24 overflow-hidden rounded-md bg-muted">
+                        {thumbPreview(v.thumbnail_path) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={thumbPreview(v.thumbnail_path)!}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
+                            없음
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-3 py-2 font-medium">{v.title}</td>
                     <td className="px-3 py-2 font-mono text-xs">{v.youtube_id}</td>
                     <td className="px-3 py-2">{v.category ?? '—'}</td>
@@ -334,7 +208,7 @@ export default function AdminVideosPage() {
                       <button
                         type="button"
                         className={btnSecondary}
-                        onClick={() => startEdit(v)}
+                        onClick={() => setEditingId(v.id)}
                         disabled={busy}
                       >
                         수정
@@ -359,5 +233,126 @@ export default function AdminVideosPage() {
         ) : null}
       </section>
     </div>
+  )
+}
+
+function EditVideoRow({
+  video,
+  onCancel,
+  onSuccess,
+  btnPrimary,
+  btnSecondary,
+  inputClass,
+}: {
+  video: Video
+  onCancel: () => void
+  onSuccess: () => void
+  btnPrimary: string
+  btnSecondary: string
+  inputClass: string
+}) {
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(
+    updateLectureVideoAction,
+    null,
+  )
+  const prevPending = useRef(false)
+
+  useEffect(() => {
+    if (prevPending.current && !pending && state === null) {
+      onSuccess()
+    }
+    prevPending.current = pending
+  }, [pending, state, onSuccess])
+
+  return (
+    <tr className="border-b border-border bg-muted/20">
+      <td className="px-3 py-4" colSpan={8}>
+        <form action={formAction} encType="multipart/form-data" className="space-y-4">
+          <input type="hidden" name="id" value={video.id} />
+          {state?.error ? (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {state.error}
+            </p>
+          ) : null}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="block text-sm">
+              <span className="font-medium">제목</span>
+              <input className={inputClass} name="title" required defaultValue={video.title} />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">YouTube ID</span>
+              <input className={inputClass} name="youtube_id" required defaultValue={video.youtube_id} />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">카테고리</span>
+              <input className={inputClass} name="category" defaultValue={video.category ?? ''} />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">필요 등급</span>
+              <select
+                className={inputClass}
+                name="required_role"
+                defaultValue={video.required_role as VideoRole}
+              >
+                <option value="MEMBER">MEMBER</option>
+                <option value="PREMIUM">PREMIUM</option>
+              </select>
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">순서</span>
+              <input
+                type="number"
+                className={inputClass}
+                name="sort_order"
+                defaultValue={video.sort_order}
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">길이(초)</span>
+              <input
+                type="number"
+                className={inputClass}
+                name="duration_sec"
+                defaultValue={video.duration_sec ?? ''}
+              />
+            </label>
+            <label className="block text-sm sm:col-span-2 lg:col-span-3">
+              <span className="font-medium">새 썸네일 (선택)</span>
+              <input
+                className={`${inputClass} cursor-pointer file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm`}
+                name="thumbnail"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+              />
+            </label>
+            {video.thumbnail_path ? (
+              <label className="flex items-center gap-2 text-sm sm:col-span-2 lg:col-span-3">
+                <input type="checkbox" name="remove_thumbnail" className="rounded border-input" />
+                <span>기존 썸네일 삭제 (새 파일을 올리면 자동으로 교체됩니다)</span>
+              </label>
+            ) : null}
+            <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-3">
+              <button type="submit" className={btnPrimary} disabled={pending}>
+                {pending ? '저장 중…' : '저장'}
+              </button>
+              <button type="button" className={btnSecondary} onClick={onCancel} disabled={pending}>
+                취소
+              </button>
+            </div>
+          </div>
+          {video.thumbnail_path && thumbPreview(video.thumbnail_path) ? (
+            <p className="text-xs text-muted-foreground">
+              현재 썸네일:{' '}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={thumbPreview(video.thumbnail_path)!}
+                alt=""
+                className="mt-1 inline-block h-16 max-w-[200px] rounded border object-cover align-middle"
+              />
+            </p>
+          ) : null}
+        </form>
+      </td>
+    </tr>
   )
 }

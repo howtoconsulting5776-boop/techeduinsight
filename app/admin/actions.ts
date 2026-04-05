@@ -173,8 +173,21 @@ export async function adminDeleteVideo(
   const ctx = await getAdminClientOrNull()
   if (!ctx) return { ok: false, error: '권한이 없습니다.' }
 
+  const { data: row } = await ctx.supabase
+    .from('videos')
+    .select('thumbnail_path')
+    .eq('id', id)
+    .maybeSingle()
+
+  const thumbPath = (row?.thumbnail_path as string | null | undefined)?.trim() || null
+
   const { error } = await ctx.supabase.from('videos').delete().eq('id', id)
   if (error) return { ok: false, error: error.message }
+
+  if (thumbPath) {
+    await ctx.supabase.storage.from('thumbnails').remove([thumbPath])
+  }
+
   revalidatePath('/admin/videos')
   revalidatePath('/lectures')
   return { ok: true }
@@ -223,6 +236,22 @@ export async function adminListProjects(): Promise<
   })
 
   return { ok: true, projects }
+}
+
+export async function adminDeleteProject(
+  projectId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const ctx = await getAdminClientOrNull()
+  if (!ctx) return { ok: false, error: '권한이 없습니다.' }
+
+  const { error } = await ctx.supabase.from('projects').delete().eq('id', projectId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/admin/projects')
+  revalidatePath('/dashboard/projects')
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/')
+  return { ok: true }
 }
 
 export async function adminSetProjectPublished(

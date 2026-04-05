@@ -1,4 +1,5 @@
 import { createClient } from '@/app/lib/supabase/server'
+import { getThumbnailUrl } from '@/app/lib/storage'
 import { canWatchLecture, lectureCardHref } from '@/app/lib/video/access'
 import type { UserRole } from '@/app/lib/types'
 import type { VideoRole } from '@/app/lib/types'
@@ -20,6 +21,7 @@ export default async function LecturesPage() {
       sort_order: number
       duration_sec: number | null
       required_role: VideoRole
+      thumbnail_path: string | null
     }>
 
   const {
@@ -67,6 +69,7 @@ export default async function LecturesPage() {
       sort_order: row.sort_order,
       duration_sec: row.duration_sec,
       required_role: row.required_role,
+      thumbnailUrl: getThumbnailUrl(row.thumbnail_path),
       href,
       locked,
       showPremiumBadge,

@@ -36,6 +36,7 @@ export interface Video {
   category: string | null
   sort_order: number
   duration_sec: number | null
+  thumbnail_path: string | null
   created_at: string
 }
 
