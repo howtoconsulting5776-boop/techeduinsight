@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/app/lib/supabase/server'
+import { ProjectCardThumbnail } from '@/app/components/ProjectCardThumbnail'
 import { getThumbnailUrl } from '@/app/lib/storage'
 import type { ProjectWithProfile } from '@/app/lib/types'
 
@@ -54,14 +55,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         {/* ── Hero thumbnail ── */}
         <div className="overflow-hidden rounded-xl border">
           {thumbUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={thumbUrl}
-              alt={p.title}
-              className="h-64 w-full object-cover"
-            />
+            <ProjectCardThumbnail src={thumbUrl} alt={p.title} />
           ) : (
-            <div className="h-64 w-full bg-[linear-gradient(135deg,var(--brand-navy),var(--brand-sky))]" />
+            <div className="aspect-video w-full bg-[linear-gradient(135deg,var(--brand-navy),var(--brand-sky))]" />
           )}
         </div>
 

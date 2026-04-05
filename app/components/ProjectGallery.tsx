@@ -3,12 +3,13 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { ProjectWithProfile } from '@/app/lib/types'
+import { ProjectCardThumbnail } from '@/app/components/ProjectCardThumbnail'
 import { getThumbnailUrl } from '@/app/lib/storage'
 import { Input } from '@/components/ui/input'
 
 function ThumbnailPlaceholder() {
   return (
-    <div className="h-48 w-full bg-[linear-gradient(135deg,var(--brand-navy),var(--brand-sky))]" />
+    <div className="aspect-video w-full bg-[linear-gradient(135deg,var(--brand-navy),var(--brand-sky))]" />
   )
 }
 
@@ -109,12 +110,7 @@ export default function ProjectGallery({ projects }: Props) {
               >
                 {/* Thumbnail */}
                 {thumbUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={thumbUrl}
-                    alt={project.title}
-                    className="h-48 w-full object-cover transition-transform group-hover:scale-105"
-                  />
+                  <ProjectCardThumbnail src={thumbUrl} alt={project.title} hoverScale />
                 ) : (
                   <ThumbnailPlaceholder />
                 )}

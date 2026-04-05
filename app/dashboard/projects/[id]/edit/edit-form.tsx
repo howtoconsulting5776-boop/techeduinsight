@@ -1,8 +1,10 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { deleteProject, updateProject } from './actions'
+import { ThumbnailCropField } from '@/app/components/ThumbnailCropField'
+import { getThumbnailUrl } from '@/app/lib/storage'
 import {
   Card,
   CardContent,
@@ -26,10 +28,13 @@ interface Props {
 }
 
 export default function EditProjectForm({ project, viewerIsAdmin, cancelHref }: Props) {
-  const [state, formAction, pending] = useActionState<ActionState, FormData>(
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const [state, formAction, actionPending] = useActionState<ActionState, FormData>(
     updateProject,
     null,
   )
+  const pending = actionPending || isPending
 
   const tagsStr = project.tags?.join(', ') ?? ''
 
@@ -47,7 +52,18 @@ export default function EditProjectForm({ project, viewerIsAdmin, cancelHref }: 
           </CardDescription>
         </CardHeader>
 
-        <form action={formAction}>
+        <form
+          action={formAction}
+          onSubmit={(e) => {
+            e.preventDefault()
+            const form = e.currentTarget
+            const fd = new FormData(form)
+            if (thumbnailFile) {
+              fd.set('thumbnail', thumbnailFile)
+            }
+            startTransition(() => formAction(fd))
+          }}
+        >
           <input type="hidden" name="id" value={project.id} />
           <input type="hidden" name="thumbnail_path_current" value={project.thumbnail_path ?? ''} />
 
@@ -103,15 +119,10 @@ export default function EditProjectForm({ project, viewerIsAdmin, cancelHref }: 
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="thumbnail">썸네일 이미지 (바꾸려면 선택)</Label>
-              <Input
-                id="thumbnail"
-                name="thumbnail"
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-              />
-            </div>
+            <ThumbnailCropField
+              onPreparedFileChange={setThumbnailFile}
+              existingImageUrl={getThumbnailUrl(project.thumbnail_path)}
+            />
           </CardContent>
 
           <CardFooter className="flex flex-wrap gap-3">

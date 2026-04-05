@@ -1,7 +1,8 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState, useTransition } from 'react'
 import { createProject } from './actions'
+import { ThumbnailCropField } from '@/app/components/ThumbnailCropField'
 import {
   Card,
   CardContent,
@@ -19,10 +20,13 @@ import Link from 'next/link'
 type ActionState = { error?: string } | null
 
 export default function NewProjectPage() {
-  const [state, formAction, pending] = useActionState<ActionState, FormData>(
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const [state, formAction, actionPending] = useActionState<ActionState, FormData>(
     createProject,
     null,
   )
+  const pending = actionPending || isPending
 
   return (
     <main className="flex min-h-screen items-start justify-center bg-background px-4 py-12">
@@ -32,7 +36,18 @@ export default function NewProjectPage() {
           <CardDescription>작업물을 쇼케이스에 등록합니다</CardDescription>
         </CardHeader>
 
-        <form action={formAction}>
+        <form
+          action={formAction}
+          onSubmit={(e) => {
+            e.preventDefault()
+            const form = e.currentTarget
+            const fd = new FormData(form)
+            if (thumbnailFile) {
+              fd.set('thumbnail', thumbnailFile)
+            }
+            startTransition(() => formAction(fd))
+          }}
+        >
           <CardContent className="space-y-5">
             {state?.error && (
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -93,19 +108,7 @@ export default function NewProjectPage() {
               </p>
             </div>
 
-            {/* Thumbnail */}
-            <div className="space-y-1.5">
-              <Label htmlFor="thumbnail">썸네일 이미지</Label>
-              <Input
-                id="thumbnail"
-                name="thumbnail"
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-              />
-              <p className="text-xs text-muted-foreground">
-                PNG, JPEG, WEBP, GIF — 최대 5MB
-              </p>
-            </div>
+            <ThumbnailCropField onPreparedFileChange={setThumbnailFile} />
           </CardContent>
 
           <CardFooter className="flex gap-3">

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/app/lib/supabase/server'
+import { ProjectCardThumbnail } from '@/app/components/ProjectCardThumbnail'
 import { getThumbnailUrl } from '@/app/lib/storage'
 import type { Project } from '@/app/lib/types'
 
@@ -21,7 +22,7 @@ function StatusBadge({ status }: { status: Project['status'] }) {
 
 function ThumbnailPlaceholder() {
   return (
-    <div className="h-40 w-full rounded-t-lg bg-[linear-gradient(135deg,#1e3a5f,#38bdf8)]" />
+    <div className="aspect-video w-full rounded-t-lg bg-[linear-gradient(135deg,#1e3a5f,#38bdf8)]" />
   )
 }
 
@@ -91,12 +92,7 @@ export default async function MyProjectsPage() {
                 >
                   {/* Thumbnail */}
                   {thumbUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={thumbUrl}
-                      alt={project.title}
-                      className="h-40 w-full object-cover"
-                    />
+                    <ProjectCardThumbnail src={thumbUrl} alt={project.title} hoverScale />
                   ) : (
                     <ThumbnailPlaceholder />
                   )}
