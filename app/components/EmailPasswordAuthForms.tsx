@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSupabaseBrowser } from '@/app/components/SupabaseBrowserProvider'
+import { validateSignupDisplayName } from '@/app/lib/auth/display-name'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -167,6 +168,13 @@ export function EmailPasswordSignupForm({
     const fd = new FormData(e.currentTarget)
     const email = (fd.get('email') as string)?.trim()
     const password = fd.get('password') as string
+    const displayNameInput = (fd.get('displayName') as string) ?? ''
+    const nameCheck = validateSignupDisplayName(displayNameInput)
+    if (!nameCheck.ok) {
+      setError(nameCheck.error)
+      return
+    }
+    const displayName = nameCheck.value
     if (!email || !password) {
       setError('이메일과 비밀번호를 입력하세요.')
       return
@@ -180,7 +188,7 @@ export function EmailPasswordSignupForm({
       const apiRes = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, displayName }),
       })
       const apiJson: { ok?: boolean; error?: string; message?: string } = await apiRes
         .json()
@@ -205,7 +213,10 @@ export function EmailPasswordSignupForm({
         const { data, error: err } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo },
+          options: {
+            emailRedirectTo,
+            data: { display_name: displayName },
+          },
         })
         if (err) {
           setError(mapSupabaseAuthError(err.message))
@@ -238,6 +249,21 @@ export function EmailPasswordSignupForm({
             {error}
           </p>
         ) : null}
+
+        <div className="space-y-1.5">
+          <Label htmlFor="signup-display-name">별명</Label>
+          <Input
+            id="signup-display-name"
+            name="displayName"
+            type="text"
+            placeholder="쇼케이스에 표시될 이름"
+            required
+            minLength={2}
+            maxLength={40}
+            autoComplete="nickname"
+          />
+          <p className="text-xs text-muted-foreground">공개 프로젝트 카드에 &quot;by …&quot; 로 보입니다.</p>
+        </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="signup-email">이메일</Label>

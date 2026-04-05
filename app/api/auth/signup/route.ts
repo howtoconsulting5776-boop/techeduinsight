@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { validateSignupDisplayName } from '@/app/lib/auth/display-name'
 import { createServiceRoleClient } from '@/app/lib/supabase/service'
 
 const WINDOW_MS = 15 * 60 * 1000
@@ -48,9 +49,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '잘못된 요청입니다.' }, { status: 400 })
   }
 
-  const o = body as { email?: unknown; password?: unknown }
+  const o = body as { email?: unknown; password?: unknown; displayName?: unknown }
   const email = typeof o.email === 'string' ? o.email.trim() : ''
   const password = typeof o.password === 'string' ? o.password : ''
+  const displayNameRaw = typeof o.displayName === 'string' ? o.displayName : ''
+
+  const nameCheck = validateSignupDisplayName(displayNameRaw)
+  if (!nameCheck.ok) {
+    return NextResponse.json({ error: nameCheck.error }, { status: 400 })
+  }
+  const displayName = nameCheck.value
 
   if (!email || !password) {
     return NextResponse.json({ error: '이메일과 비밀번호를 입력하세요.' }, { status: 400 })
@@ -84,6 +92,7 @@ export async function POST(request: Request) {
     email,
     password,
     email_confirm: true,
+    user_metadata: { display_name: displayName },
   })
 
   if (error) {

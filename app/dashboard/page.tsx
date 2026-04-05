@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/app/lib/supabase/server'
+import { ProfileDisplayNameForm } from '@/app/dashboard/ProfileDisplayNameForm'
 import { logout } from '@/app/login/actions'
 import { Button } from '@/components/ui/button'
 import {
@@ -98,6 +99,14 @@ export default async function DashboardPage() {
             <span className="text-sm font-medium text-muted-foreground">가입일</span>
             <span className="text-sm">{joinedAt}</span>
           </div>
+
+          <ProfileDisplayNameForm
+            initialDisplayName={
+              profile?.display_name?.trim() ||
+              user.email?.split('@')[0] ||
+              '회원'
+            }
+          />
 
           {/* Navigation */}
           <div className="grid grid-cols-2 gap-2">
