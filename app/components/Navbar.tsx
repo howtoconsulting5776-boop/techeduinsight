@@ -21,7 +21,7 @@ const NAV_LINKS: Array<{
   requireAuth?: boolean
 }> = [
   { href: '/insights', label: '인사이트', key: 'insights' },
-  { href: '/showcase', label: '쇼케이스', key: 'showcase' },
+  { href: '/#showcase', label: '쇼케이스', key: 'showcase' },
   { href: '/lectures', label: '강의', key: 'lectures' },
   { href: '/dashboard', label: '대시보드', key: 'dashboard', requireAuth: true },
 ]
@@ -32,7 +32,7 @@ const NAV_LINKS: Array<{
  */
 function resolveActiveNav(pathname: string | null): NavKey | null {
   if (!pathname) return null
-  if (pathname === '/showcase' || pathname.startsWith('/projects/')) return 'showcase'
+  if (pathname.startsWith('/projects/')) return 'showcase'
   if (pathname.startsWith('/lectures') || pathname.startsWith('/watch/')) return 'lectures'
   if (pathname.startsWith('/insights')) return 'insights'
   if (pathname.startsWith('/dashboard')) return 'dashboard'

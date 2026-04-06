@@ -251,7 +251,7 @@ export async function adminDeleteProject(
   revalidatePath('/dashboard/projects')
   revalidatePath(`/projects/${projectId}`)
   revalidatePath('/')
-  revalidatePath('/showcase')
+  revalidatePath('/')
   return { ok: true }
 }
 
@@ -273,7 +273,7 @@ export async function adminSetProjectPublished(
   revalidatePath('/dashboard/admin/projects')
   revalidatePath('/dashboard/projects')
   revalidatePath('/')
-  revalidatePath('/showcase')
+  revalidatePath('/')
   revalidatePath(`/projects/${projectId}`)
   return { ok: true }
 }

@@ -57,7 +57,7 @@ export async function toggleProjectLike(projectId: string): Promise<
   }
 
   revalidatePath('/')
-  revalidatePath('/showcase')
+  revalidatePath('/')
   revalidatePath(`/projects/${projectId}`)
 
   return { ok: true, liked: !existing, likesCount }
@@ -149,7 +149,7 @@ export async function addProjectComment(
     }
 
     revalidatePath('/')
-    revalidatePath('/showcase')
+    revalidatePath('/')
     revalidatePath(`/projects/${projectId}`, 'page')
     revalidatePath(`/projects/${projectId}`)
 
@@ -189,7 +189,7 @@ export async function deleteProjectComment(
     }
 
     revalidatePath('/')
-    revalidatePath('/showcase')
+    revalidatePath('/')
     revalidatePath(`/projects/${projectId}`, 'page')
     revalidatePath(`/projects/${projectId}`)
 
@@ -221,7 +221,7 @@ export async function recordProjectShare(
     return { ok: false }
   }
   revalidatePath('/')
-  revalidatePath('/showcase')
+  revalidatePath('/')
   revalidatePath(`/projects/${projectId}`)
   return { ok: true }
 }

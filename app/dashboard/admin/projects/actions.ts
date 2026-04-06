@@ -41,7 +41,7 @@ export async function approveProject(formData: FormData) {
   revalidatePath('/admin/projects')
   revalidatePath('/dashboard/projects')
   revalidatePath('/')
-  revalidatePath('/showcase')
+  revalidatePath('/')
   revalidatePath(`/projects/${id}`)
 }
 

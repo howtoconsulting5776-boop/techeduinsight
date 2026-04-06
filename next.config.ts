@@ -16,6 +16,11 @@ function supabaseStorageHostname(): string {
 }
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/showcase", destination: "/#showcase", permanent: true },
+    ];
+  },
   turbopack: {
     root: projectRoot,
   },

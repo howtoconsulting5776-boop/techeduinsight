@@ -1,5 +1,3 @@
-import Link from 'next/link'
-import { HeroWhale } from '@/app/components/landing/HeroWhale'
 import { InsightSection } from '@/app/components/insights/InsightSection'
 import { LandingSectionHeader } from '@/app/components/landing/LandingSectionHeader'
 import { RecentLecturesSection } from '@/app/components/landing/RecentLecturesSection'
@@ -23,10 +21,9 @@ export default async function HomePage() {
     .order('sort_priority', { ascending: false })
     .limit(4)
 
-  const { projects: previewItems, hadProfileJoinError } = await getShowcaseGalleryItems(
+  const { projects: galleryItems, hadProfileJoinError } = await getShowcaseGalleryItems(
     supabase,
     user,
-    { limit: 3 },
   )
 
   const { data: insightRows, error: insightsErr } = await insightsQuery
@@ -79,11 +76,30 @@ export default async function HomePage() {
   return (
     <>
       <section className="relative flex min-h-[min(520px,70svh)] flex-col items-center justify-center overflow-hidden bg-brand-navy px-4 py-14 text-center md:min-h-[min(600px,78svh)] md:py-20">
+        <video
+          className="hero-video-bg pointer-events-none absolute inset-0 z-0 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden
+        >
+          <source src="/hero-whale-bg.mp4" type="video/mp4" />
+        </video>
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_65%_at_50%_50%,rgba(74,144,217,0.24),transparent_62%)]"
+          className="pointer-events-none absolute inset-0 z-[1] bg-brand-navy/50"
           aria-hidden
         />
-        <HeroWhale />
+        <div
+          className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_80%_65%_at_50%_50%,rgba(74,144,217,0.22),transparent_62%)]"
+          aria-hidden
+        />
+        {/* 영상에 박힌 워터마크(예: Veo, 좌상단) 가림 — 없애려면 public/hero-whale-bg.mp4를 무표기 버전으로 교체 */}
+        <div
+          className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_96%_78%_at_0%_0%,rgba(27,58,107,0.99),transparent_92%)]"
+          aria-hidden
+        />
         <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-col items-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-sky/90">
             Learning platform
@@ -108,29 +124,22 @@ export default async function HomePage() {
       ) : null}
 
       <section
-        aria-label="최근 프로젝트"
-        className={`bg-white dark:bg-background ${insightItems.length === 0 ? 'border-t border-border' : ''}`}
+        id="showcase"
+        aria-label="프로젝트 쇼케이스"
+        className={`scroll-mt-20 bg-white dark:bg-background ${insightItems.length === 0 ? 'border-t border-border' : ''}`}
       >
         <div className="mx-auto w-full max-w-6xl px-4 py-14 md:py-20">
           <LandingSectionHeader
             label="Showcase"
-            title="최근 프로젝트"
-            description="최근에 공개된 프로젝트입니다. 전체 목록·검색·태그 필터는 쇼케이스에서 이용할 수 있습니다."
-            actions={
-              <Link
-                href="/showcase"
-                className="inline-flex items-center justify-center rounded-lg bg-brand-navy px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-navy/90"
-              >
-                쇼케이스 전체 보기
-              </Link>
-            }
+            title="프로젝트 쇼케이스"
+            description="회원들이 공유한 공개 프로젝트를 검색하고, 태그로 골라볼 수 있습니다."
           />
           {hadProfileJoinError ? (
             <p className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
               작성자 표시를 불러오지 못했습니다. 마이그레이션(프로필 공개 조회) 적용 여부를 확인하세요.
             </p>
           ) : null}
-          <ProjectGallery projects={previewItems} showFilters={false} />
+          <ProjectGallery projects={galleryItems} />
         </div>
       </section>
 

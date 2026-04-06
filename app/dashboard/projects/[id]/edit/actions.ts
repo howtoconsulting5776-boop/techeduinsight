@@ -113,7 +113,7 @@ export async function updateProject(
   revalidatePath('/admin/projects')
   revalidatePath(`/projects/${id}`)
   revalidatePath('/')
-  revalidatePath('/showcase')
+  revalidatePath('/')
   redirect(admin ? '/admin/projects' : '/dashboard/projects')
 }
 
@@ -167,6 +167,6 @@ export async function deleteProject(formData: FormData) {
   revalidatePath('/admin/projects')
   revalidatePath(`/projects/${id}`)
   revalidatePath('/')
-  revalidatePath('/showcase')
+  revalidatePath('/')
   redirect(admin ? '/admin/projects' : '/dashboard/projects')
 }

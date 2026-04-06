@@ -132,7 +132,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     <>
       <main className="mx-auto w-full max-w-4xl px-4 py-10">
         <Link
-          href="/showcase"
+          href="/#showcase"
           className="mb-6 inline-flex text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           ← 갤러리로 돌아가기
