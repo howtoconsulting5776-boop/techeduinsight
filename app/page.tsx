@@ -1,9 +1,15 @@
 import Link from 'next/link'
 import { InsightSection } from '@/app/components/insights/InsightSection'
 import { LandingSectionHeader } from '@/app/components/landing/LandingSectionHeader'
+import { RecentLecturesSection } from '@/app/components/landing/RecentLecturesSection'
 import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
+import {
+  mapCatalogRowsToLectureListItems,
+  type LectureCatalogRow,
+} from '@/app/lib/lecture-list-items'
 import ProjectGallery from '@/app/components/ProjectGallery'
-import type { EduInsight, ProjectGalleryItem, ProjectWithProfile } from '@/app/lib/types'
+import type { EduInsight, UserRole } from '@/app/lib/types'
+import { getShowcaseGalleryItems } from '@/app/lib/showcase-gallery-data'
 
 export default async function HomePage() {
   const { supabase, user } = await getCachedSupabaseAuth()
@@ -16,92 +22,11 @@ export default async function HomePage() {
     .order('sort_priority', { ascending: false })
     .limit(4)
 
-  const showcaseQuery = await supabase
-    .from('projects')
-    .select('*, profiles(display_name, avatar_url)')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
-
-  let items: ProjectWithProfile[]
-
-  if (showcaseQuery.error) {
-    const msg = showcaseQuery.error.message
-    const soft = /fetch|timeout|aborted|network|ECONNRESET|UND_ERR/i.test(msg)
-    if (soft) console.warn('[showcase] projects (network):', msg)
-    else console.error('[showcase] projects select failed:', msg)
-    const fallback = await supabase
-      .from('projects')
-      .select('*')
-      .eq('status', 'published')
-      .order('created_at', { ascending: false })
-    if (fallback.error) {
-      const msg = fallback.error.message
-      const soft = /fetch|timeout|aborted|network|ECONNRESET|UND_ERR/i.test(msg)
-      if (soft) console.warn('[showcase] projects fallback (network):', msg)
-      else console.error('[showcase] projects fallback failed:', msg)
-      items = []
-    } else {
-      items = (fallback.data ?? []).map((row) => ({
-        ...row,
-        profiles: { display_name: null, avatar_url: null },
-      })) as ProjectWithProfile[]
-    }
-  } else {
-    items = (showcaseQuery.data ?? []) as ProjectWithProfile[]
-  }
-  const ids = items.map((p) => p.id)
-  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') ?? ''
-
-  const countMap = new Map<string, { likes: number; comments: number; shares: number }>()
-  if (ids.length > 0) {
-    const { data: countRows, error: rpcErr } = await supabase.rpc('project_social_counts', {
-      p_ids: ids,
-    })
-    if (rpcErr) {
-      console.warn('[showcase] project_social_counts:', rpcErr.message)
-    } else {
-      for (const row of countRows ?? []) {
-        const r = row as {
-          project_id: string
-          likes_count: number
-          comments_count: number
-          share_count?: number
-        }
-        countMap.set(r.project_id, {
-          likes: Number(r.likes_count),
-          comments: Number(r.comments_count),
-          shares: Number(r.share_count ?? 0),
-        })
-      }
-    }
-  }
-
-  let likedIds = new Set<string>()
-  if (user && ids.length > 0) {
-    const { data: likeRows, error: likeErr } = await supabase
-      .from('project_likes')
-      .select('project_id')
-      .eq('user_id', user.id)
-      .in('project_id', ids)
-    if (likeErr) {
-      console.warn('[showcase] project_likes:', likeErr.message)
-    } else {
-      likedIds = new Set((likeRows ?? []).map((r) => r.project_id as string))
-    }
-  }
-
-  const galleryItems: ProjectGalleryItem[] = items.map((p) => {
-    const c = countMap.get(p.id) ?? { likes: 0, comments: 0, shares: 0 }
-    const share_url = site ? `${site}/projects/${p.id}` : `/projects/${p.id}`
-    return {
-      ...p,
-      likes_count: c.likes,
-      comments_count: c.comments,
-      share_count: c.shares,
-      liked_by_me: likedIds.has(p.id),
-      share_url,
-    }
-  })
+  const { projects: previewItems, hadProfileJoinError } = await getShowcaseGalleryItems(
+    supabase,
+    user,
+    { limit: 3 },
+  )
 
   const { data: insightRows, error: insightsErr } = await insightsQuery
   if (insightsErr) {
@@ -114,6 +39,41 @@ export default async function HomePage() {
     }
   }
   const insightItems = (!insightsErr ? (insightRows ?? []) : []) as EduInsight[]
+
+  const { data: recentLectureRowsRaw, error: recentLecturesErr } = await supabase.rpc(
+    'list_recent_lectures_for_landing',
+    { p_limit: 4 },
+  )
+  if (recentLecturesErr) {
+    console.warn('[lectures] home recent:', recentLecturesErr.message)
+  }
+
+  let profileRole: UserRole | null = null
+  const progressMap: Record<string, number> = {}
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    profileRole = (profile?.role as UserRole) ?? 'MEMBER'
+
+    const { data: hist } = await supabase
+      .from('watch_history')
+      .select('video_id, progress_pct')
+      .eq('user_id', user.id)
+
+    for (const h of hist ?? []) {
+      progressMap[h.video_id] = h.progress_pct
+    }
+  }
+
+  const recentLectureRows = (!recentLecturesErr ? (recentLectureRowsRaw ?? []) : []) as LectureCatalogRow[]
+  const recentLectureItems = mapCatalogRowsToLectureListItems(recentLectureRows, {
+    profileRole,
+    isLoggedIn: !!user,
+    progressMap,
+  })
 
   return (
     <>
@@ -132,28 +92,6 @@ export default async function HomePage() {
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/78 md:text-lg">
             AI 프로젝트 공유 및 학습 플랫폼
           </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <Link
-              href="#showcase"
-              className="inline-flex min-w-[200px] items-center justify-center rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-brand-navy shadow-sm transition-colors hover:bg-brand-bg"
-            >
-              프로젝트 둘러보기
-            </Link>
-            <Link
-              href="/lectures"
-              className="inline-flex min-w-[200px] items-center justify-center rounded-xl border border-white/35 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur-[2px] transition-colors hover:border-brand-sky/50 hover:bg-brand-sky/15"
-            >
-              강의 보러가기
-            </Link>
-          </div>
-          {user ? (
-            <Link
-              href="/dashboard/projects/new"
-              className="mt-9 inline-block text-sm font-medium text-brand-sky/95 underline-offset-4 hover:text-white hover:underline"
-            >
-              + 내 프로젝트 등록하기
-            </Link>
-          ) : null}
         </div>
       </section>
 
@@ -167,24 +105,34 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      <main
-        id="showcase"
-        className={`scroll-mt-20 bg-background ${insightItems.length === 0 ? 'border-t border-border' : ''}`}
+      <section
+        aria-label="최근 프로젝트"
+        className={`bg-background ${insightItems.length === 0 ? 'border-t border-border' : ''}`}
       >
         <div className="mx-auto w-full max-w-6xl px-4 py-14 md:py-20">
           <LandingSectionHeader
             label="Showcase"
-            title="프로젝트 쇼케이스"
-            description="회원들이 공유한 공개 프로젝트를 검색하고, 태그로 골라볼 수 있습니다."
+            title="최근 프로젝트"
+            description="최근에 공개된 프로젝트입니다. 전체 목록·검색·태그 필터는 쇼케이스에서 이용할 수 있습니다."
+            actions={
+              <Link
+                href="/showcase"
+                className="inline-flex items-center justify-center rounded-lg bg-brand-navy px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-navy/90"
+              >
+                쇼케이스 전체 보기
+              </Link>
+            }
           />
-          {showcaseQuery.error && items.length > 0 ? (
+          {hadProfileJoinError ? (
             <p className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
               작성자 표시를 불러오지 못했습니다. 마이그레이션(프로필 공개 조회) 적용 여부를 확인하세요.
             </p>
           ) : null}
-          <ProjectGallery projects={galleryItems} />
+          <ProjectGallery projects={previewItems} showFilters={false} />
         </div>
-      </main>
+      </section>
+
+      <RecentLecturesSection items={recentLectureItems} />
     </>
   )
 }

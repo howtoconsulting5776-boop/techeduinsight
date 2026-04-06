@@ -16,9 +16,11 @@ function ThumbnailPlaceholder() {
 
 interface Props {
   projects: ProjectGalleryItem[]
+  /** false면 검색·태그 필터 숨김 (랜딩 미리보기 등) */
+  showFilters?: boolean
 }
 
-export default function ProjectGallery({ projects }: Props) {
+export default function ProjectGallery({ projects, showFilters = true }: Props) {
   const [query, setQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<Set<string>>(() => new Set())
 
@@ -59,41 +61,43 @@ export default function ProjectGallery({ projects }: Props) {
 
   return (
     <>
-      <div className="mb-6 flex flex-col items-center gap-6">
-        <Input
-          type="search"
-          placeholder="프로젝트 제목으로 검색…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="h-10 w-full max-w-md rounded-xl border-border/90 px-3.5 shadow-sm"
-        />
-        {allTags.length > 0 && (
-          <div className="w-full max-w-3xl">
-            <p className="mb-2 text-center text-xs font-medium text-muted-foreground">
-              태그 필터 (다중 선택 · AND)
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {allTags.map((tag) => {
-                const on = selectedTags.has(tag)
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                      on
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border bg-muted/50 text-muted-foreground hover:bg-muted'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                )
-              })}
+      {showFilters ? (
+        <div className="mb-6 flex flex-col items-center gap-6">
+          <Input
+            type="search"
+            placeholder="프로젝트 제목으로 검색…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-10 w-full max-w-md rounded-xl border-border/90 px-3.5 shadow-sm"
+          />
+          {allTags.length > 0 && (
+            <div className="w-full max-w-3xl">
+              <p className="mb-2 text-center text-xs font-medium text-muted-foreground">
+                태그 필터 (다중 선택 · AND)
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {allTags.map((tag) => {
+                  const on = selectedTags.has(tag)
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                        on
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border bg-muted/50 text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      ) : null}
 
       {filtered.length === 0 ? (
         <div className="mx-auto max-w-md py-20 text-center">

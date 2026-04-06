@@ -1,8 +1,9 @@
 import { createClient } from '@/app/lib/supabase/server'
-import { getThumbnailUrl } from '@/app/lib/storage'
-import { canWatchLecture, lectureCardHref } from '@/app/lib/video/access'
+import {
+  mapCatalogRowsToLectureListItems,
+  type LectureCatalogRow,
+} from '@/app/lib/lecture-list-items'
 import type { UserRole } from '@/app/lib/types'
-import type { VideoRole } from '@/app/lib/types'
 import LectureCatalog, { type LectureListItem } from './lecture-catalog'
 
 export default async function LecturesPage() {
@@ -13,16 +14,7 @@ export default async function LecturesPage() {
     console.error(error)
   }
 
-  const rows =
-    (catalog ?? []) as Array<{
-      id: string
-      title: string
-      category: string | null
-      sort_order: number
-      duration_sec: number | null
-      required_role: VideoRole
-      thumbnail_path: string | null
-    }>
+  const rows = (catalog ?? []) as LectureCatalogRow[]
 
   const {
     data: { user },
@@ -51,30 +43,10 @@ export default async function LecturesPage() {
 
   const isLoggedIn = !!user
 
-  const items: LectureListItem[] = rows.map((row) => {
-    const canWatch = canWatchLecture(row.required_role, profileRole, isLoggedIn)
-    const href = lectureCardHref({
-      videoId: row.id,
-      requiredRole: row.required_role,
-      isLoggedIn,
-      canWatch,
-    })
-    const locked = !canWatch
-    const showPremiumBadge = row.required_role === 'PREMIUM'
-
-    return {
-      id: row.id,
-      title: row.title,
-      category: row.category,
-      sort_order: row.sort_order,
-      duration_sec: row.duration_sec,
-      required_role: row.required_role,
-      thumbnailUrl: getThumbnailUrl(row.thumbnail_path),
-      href,
-      locked,
-      showPremiumBadge,
-      progressPct: progressMap[row.id] ?? null,
-    }
+  const items: LectureListItem[] = mapCatalogRowsToLectureListItems(rows, {
+    profileRole,
+    isLoggedIn,
+    progressMap,
   })
 
   items.sort((a, b) => a.sort_order - b.sort_order || a.title.localeCompare(b.title, 'ko'))
