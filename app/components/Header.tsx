@@ -71,6 +71,9 @@ export default function Header({ initialUser = null }: HeaderProps) {
             <Link href="/lectures" className={navLinkClass} onClick={closeMenu}>
               강의
             </Link>
+            <Link href="/insights" className={navLinkClass} onClick={closeMenu}>
+              인사이트
+            </Link>
             <Link href="/dashboard" className={navLinkClass} onClick={closeMenu}>
               대시보드
             </Link>

@@ -1,10 +1,19 @@
 import Link from 'next/link'
+import { InsightSection } from '@/app/components/insights/InsightSection'
 import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
 import ProjectGallery from '@/app/components/ProjectGallery'
-import type { ProjectGalleryItem, ProjectWithProfile } from '@/app/lib/types'
+import type { EduInsight, ProjectGalleryItem, ProjectWithProfile } from '@/app/lib/types'
 
 export default async function HomePage() {
   const { supabase, user } = await getCachedSupabaseAuth()
+
+  const insightsQuery = supabase
+    .from('edu_insights')
+    .select('*')
+    .eq('is_published', true)
+    .order('published_at', { ascending: false })
+    .order('sort_priority', { ascending: false })
+    .limit(4)
 
   const showcaseQuery = await supabase
     .from('projects')
@@ -93,6 +102,18 @@ export default async function HomePage() {
     }
   })
 
+  const { data: insightRows, error: insightsErr } = await insightsQuery
+  if (insightsErr) {
+    const msg = insightsErr.message
+    const missing = /relation|does not exist|Could not find the table/i.test(msg)
+    if (missing) {
+      console.warn('[insights] home (table missing?):', msg)
+    } else {
+      console.warn('[insights] home:', msg)
+    }
+  }
+  const insightItems = (!insightsErr ? (insightRows ?? []) : []) as EduInsight[]
+
   return (
     <>
       <section className="bg-brand-navy px-4 py-16 text-center md:py-24">
@@ -121,6 +142,10 @@ export default async function HomePage() {
           </Link>
         )}
       </section>
+
+      <div className="border-t border-border bg-muted/20">
+        <InsightSection items={insightItems} />
+      </div>
 
       <main id="showcase" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 py-10">
         {showcaseQuery.error && items.length > 0 ? (

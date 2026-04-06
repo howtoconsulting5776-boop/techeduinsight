@@ -70,3 +70,19 @@ export interface WatchHistory {
   completed_at: string | null
   updated_at: string
 }
+
+export interface EduInsight {
+  id: string
+  title: string
+  summary: string | null
+  source_name: string
+  source_url: string
+  image_url: string | null
+  category: string | null
+  tags: string[] | null
+  published_at: string
+  sort_priority: number
+  is_published: boolean
+  created_at: string
+  updated_at: string
+}

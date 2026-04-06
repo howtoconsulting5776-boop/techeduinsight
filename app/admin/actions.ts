@@ -64,7 +64,7 @@ export async function adminListUsers(): Promise<
   return { ok: true, users }
 }
 
-async function getAdminClientOrNull() {
+export async function getAdminClientOrNull() {
   const supabase = await createClient()
   const {
     data: { user },

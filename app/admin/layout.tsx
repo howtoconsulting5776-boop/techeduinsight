@@ -5,6 +5,7 @@ const nav = [
   { href: '/admin/users', label: '사용자 관리' },
   { href: '/admin/videos', label: '영상 관리' },
   { href: '/admin/projects', label: '프로젝트 심사' },
+  { href: '/admin/insights', label: '인사이트' },
   { href: '/admin/stats', label: '수강 현황' },
 ] as const
 
