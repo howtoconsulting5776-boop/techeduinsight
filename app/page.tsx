@@ -143,17 +143,38 @@ export default async function HomePage() {
         )}
       </section>
 
-      <div className="border-t border-border bg-muted/20">
-        <InsightSection items={insightItems} />
-      </div>
+      {insightItems.length > 0 ? (
+        <section
+          id="insights"
+          aria-label="교육 인사이트"
+          className="border-t border-b border-brand-navy/15 bg-muted/45"
+        >
+          <InsightSection items={insightItems} />
+        </section>
+      ) : null}
 
-      <main id="showcase" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 py-10">
-        {showcaseQuery.error && items.length > 0 ? (
-          <p className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
-            작성자 표시를 불러오지 못했습니다. 마이그레이션(프로필 공개 조회) 적용 여부를 확인하세요.
-          </p>
-        ) : null}
-        <ProjectGallery projects={galleryItems} />
+      <main
+        id="showcase"
+        className={`scroll-mt-20 bg-background ${insightItems.length === 0 ? 'border-t border-border' : ''}`}
+      >
+        <div className="mx-auto w-full max-w-6xl px-4 py-12 md:py-16">
+          <header className="mb-8 md:mb-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/70">
+              Showcase
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-brand-navy md:text-3xl">프로젝트 쇼케이스</h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              회원들이 공유한 공개 프로젝트를 검색하고, 태그로 골라볼 수 있습니다.
+            </p>
+            <div className="mt-6 h-px w-full max-w-md bg-gradient-to-r from-brand-navy/40 to-transparent" />
+          </header>
+          {showcaseQuery.error && items.length > 0 ? (
+            <p className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+              작성자 표시를 불러오지 못했습니다. 마이그레이션(프로필 공개 조회) 적용 여부를 확인하세요.
+            </p>
+          ) : null}
+          <ProjectGallery projects={galleryItems} />
+        </div>
       </main>
     </>
   )
