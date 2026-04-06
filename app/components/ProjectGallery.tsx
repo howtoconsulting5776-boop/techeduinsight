@@ -111,7 +111,13 @@ export default function ProjectGallery({ projects, showFilters = true }: Props) 
           ) : null}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div
+          className={
+            showFilters
+              ? 'grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3'
+              : 'grid grid-cols-1 gap-6 md:grid-cols-3'
+          }
+        >
           {filtered.map((project) => {
             const thumbUrl = getThumbnailUrl(project.thumbnail_path)
             const dn = project.profiles?.display_name

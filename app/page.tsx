@@ -42,7 +42,7 @@ export default async function HomePage() {
 
   const { data: recentLectureRowsRaw, error: recentLecturesErr } = await supabase.rpc(
     'list_recent_lectures_for_landing',
-    { p_limit: 4 },
+    { p_limit: 3 },
   )
   if (recentLecturesErr) {
     console.warn('[lectures] home recent:', recentLecturesErr.message)
@@ -99,7 +99,7 @@ export default async function HomePage() {
         <section
           id="insights"
           aria-label="교육 인사이트"
-          className="border-t border-b border-brand-navy/10 bg-muted/40"
+          className="border-t border-b border-brand-navy/10 bg-muted/45 dark:border-border dark:bg-muted/40"
         >
           <InsightSection items={insightItems} />
         </section>
@@ -107,7 +107,7 @@ export default async function HomePage() {
 
       <section
         aria-label="최근 프로젝트"
-        className={`bg-background ${insightItems.length === 0 ? 'border-t border-border' : ''}`}
+        className={`bg-white dark:bg-background ${insightItems.length === 0 ? 'border-t border-border' : ''}`}
       >
         <div className="mx-auto w-full max-w-6xl px-4 py-14 md:py-20">
           <LandingSectionHeader

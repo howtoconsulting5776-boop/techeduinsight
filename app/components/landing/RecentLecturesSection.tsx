@@ -7,7 +7,10 @@ export function RecentLecturesSection({ items }: { items: LectureListItem[] }) {
   if (items.length === 0) return null
 
   return (
-    <section aria-label="최근 강의" className="border-t border-border bg-background">
+    <section
+      aria-label="최근 강의"
+      className="border-t border-border bg-muted/35 dark:border-border dark:bg-card"
+    >
       <div className="mx-auto w-full max-w-6xl px-4 py-14 md:py-20">
         <LandingSectionHeader
           label="Lectures"
@@ -22,7 +25,7 @@ export function RecentLecturesSection({ items }: { items: LectureListItem[] }) {
             </Link>
           }
         />
-        <div className="mx-auto flex max-w-2xl flex-col gap-4">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {items.map((item) => (
             <LectureCardLink key={item.id} item={item} />
           ))}
