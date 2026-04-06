@@ -145,3 +145,60 @@
     @apply font-sans;
   }
 }
+
+/* 랜딩 히어로: 범고래 경로 + 이동 방향에 맞춘 몸 방향(scaleX). 원본은 왼쪽 향함 → 오른쪽 이동 시 scaleX(-1) */
+@keyframes hero-whale-swim {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-5deg) scaleX(-1);
+  }
+  8% {
+    transform: translate3d(6vmin, -5vmin, 0) rotate(-1deg) scaleX(-1);
+  }
+  18% {
+    transform: translate3d(16vmin, -14vmin, 0) rotate(4deg) scaleX(-1);
+  }
+  30% {
+    transform: translate3d(32vmin, -18vmin, 0) rotate(2deg) scaleX(-1);
+  }
+  42% {
+    transform: translate3d(48vmin, -10vmin, 0) rotate(-3deg) scaleX(-1);
+  }
+  /* 오른쪽 끝: 같은 자리에서 즉시 왼쪽 향으로 (scale 보간 구간 최소화) */
+  54% {
+    transform: translate3d(58vmin, 4vmin, 0) rotate(5deg) scaleX(-1);
+  }
+  54.1% {
+    transform: translate3d(58vmin, 4vmin, 0) rotate(5deg) scaleX(1);
+  }
+  66% {
+    transform: translate3d(42vmin, 10vmin, 0) rotate(-2deg) scaleX(1);
+  }
+  78% {
+    transform: translate3d(22vmin, 6vmin, 0) rotate(-4deg) scaleX(1);
+  }
+  90% {
+    transform: translate3d(8vmin, 2vmin, 0) rotate(-6deg) scaleX(1);
+  }
+  93% {
+    transform: translate3d(3vmin, 0.5vmin, 0) rotate(-5deg) scaleX(1);
+  }
+  96% {
+    transform: translate3d(0, 0, 0) rotate(-5deg) scaleX(1);
+  }
+  96.1% {
+    transform: translate3d(0, 0, 0) rotate(-5deg) scaleX(-1);
+  }
+}
+
+.hero-whale-float {
+  animation: hero-whale-swim 42s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-whale-float {
+    animation: none;
+    will-change: auto;
+  }
+}

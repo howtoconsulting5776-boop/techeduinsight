@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { HeroWhale } from '@/app/components/landing/HeroWhale'
 import { InsightSection } from '@/app/components/insights/InsightSection'
 import { LandingSectionHeader } from '@/app/components/landing/LandingSectionHeader'
 import { RecentLecturesSection } from '@/app/components/landing/RecentLecturesSection'
@@ -82,7 +83,8 @@ export default async function HomePage() {
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_65%_at_50%_50%,rgba(74,144,217,0.24),transparent_62%)]"
           aria-hidden
         />
-        <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center">
+        <HeroWhale />
+        <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-col items-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-sky/90">
             Learning platform
           </p>
