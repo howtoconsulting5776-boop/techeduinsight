@@ -206,7 +206,8 @@ export async function adminListProjects(): Promise<
   const ctx = await getAdminClientOrNull()
   if (!ctx) return { ok: false, error: '권한이 없습니다.' }
 
-  const { data, error } = await ctx.supabase
+  const svc = createServiceRoleClient()
+  const { data, error } = await svc
     .from('projects')
     .select('id, title, owner_id, status, iframe_allowed, created_at, profiles(display_name)')
     .order('created_at', { ascending: false })
