@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/app/lib/supabase/server'
+import { createServiceRoleClient } from '@/app/lib/supabase/service'
 
 async function viewerIsAdmin(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data: profile } = await supabase
@@ -57,31 +58,58 @@ export async function updateProject(
     thumbnailPath = filePath
   }
 
-  let updateQuery = supabase
-    .from('projects')
-    .update({
-      title,
-      description,
-      deploy_url: deployUrl,
-      tags: tags.length > 0 ? tags : null,
-      thumbnail_path: thumbnailPath,
-    })
-    .eq('id', id)
-
-  if (!admin) {
-    updateQuery = updateQuery.eq('owner_id', user.id)
+  const payload = {
+    title,
+    description,
+    deploy_url: deployUrl,
+    tags: tags.length > 0 ? tags : null,
+    thumbnail_path: thumbnailPath,
   }
 
-  const { data: updated, error } = await updateQuery.select('id').maybeSingle()
+  if (admin) {
+    let svc
+    try {
+      svc = createServiceRoleClient()
+    } catch (e) {
+      return {
+        error:
+          e instanceof Error
+            ? e.message
+            : '서버 설정 오류로 저장할 수 없습니다.',
+      }
+    }
+    const { data: updated, error } = await svc
+      .from('projects')
+      .update(payload)
+      .eq('id', id)
+      .select('id')
+      .maybeSingle()
 
-  if (error) {
-    return { error: `저장 실패: ${error.message}` }
-  }
-  if (!updated) {
-    return { error: '수정할 수 없습니다. 권한이 있는지 확인하세요.' }
+    if (error) {
+      return { error: `저장 실패: ${error.message}` }
+    }
+    if (!updated) {
+      return { error: '프로젝트를 찾을 수 없습니다.' }
+    }
+  } else {
+    const { data: updated, error } = await supabase
+      .from('projects')
+      .update(payload)
+      .eq('id', id)
+      .eq('owner_id', user.id)
+      .select('id')
+      .maybeSingle()
+
+    if (error) {
+      return { error: `저장 실패: ${error.message}` }
+    }
+    if (!updated) {
+      return { error: '수정할 수 없습니다. 권한이 있는지 확인하세요.' }
+    }
   }
 
   revalidatePath('/dashboard/projects')
+  revalidatePath('/dashboard/admin/projects')
   revalidatePath('/admin/projects')
   revalidatePath(`/projects/${id}`)
   revalidatePath('/')
@@ -102,18 +130,39 @@ export async function deleteProject(formData: FormData) {
   const id = (formData.get('id') as string)?.trim()
   if (!id) redirect(admin ? '/admin/projects' : '/dashboard/projects')
 
-  let deleteQuery = supabase.from('projects').delete().eq('id', id)
-  if (!admin) {
-    deleteQuery = deleteQuery.eq('owner_id', user.id)
-  }
+  if (admin) {
+    let svc
+    try {
+      svc = createServiceRoleClient()
+    } catch {
+      redirect('/admin/projects')
+    }
+    const { data: removed } = await svc
+      .from('projects')
+      .delete()
+      .eq('id', id)
+      .select('id')
+      .maybeSingle()
 
-  const { data: removed } = await deleteQuery.select('id').maybeSingle()
+    if (!removed) {
+      redirect('/admin/projects')
+    }
+  } else {
+    const { data: removed } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id)
+      .eq('owner_id', user.id)
+      .select('id')
+      .maybeSingle()
 
-  if (!removed) {
-    redirect(admin ? '/admin/projects' : '/dashboard/projects')
+    if (!removed) {
+      redirect('/dashboard/projects')
+    }
   }
 
   revalidatePath('/dashboard/projects')
+  revalidatePath('/dashboard/admin/projects')
   revalidatePath('/admin/projects')
   revalidatePath(`/projects/${id}`)
   revalidatePath('/')
