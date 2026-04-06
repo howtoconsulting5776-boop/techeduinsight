@@ -15,7 +15,7 @@ export function InsightCard({ insight }: { insight: EduInsight }) {
   const detailHref = `/insights/${insight.id}`
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground ring-1 ring-foreground/10">
+    <article className="flex flex-col overflow-hidden rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm transition-all duration-200 hover:border-brand-navy/20 hover:shadow-md">
       <Link
         href={detailHref}
         className="relative block aspect-video w-full shrink-0 cursor-pointer bg-muted outline-none ring-brand-navy transition-opacity hover:opacity-95 focus-visible:ring-2 focus-visible:ring-offset-2"

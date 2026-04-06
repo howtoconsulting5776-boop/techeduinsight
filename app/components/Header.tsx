@@ -28,11 +28,11 @@ export default function Header({ initialUser = null }: HeaderProps) {
   const closeMenu = () => setMenuOpen(false)
 
   const navLinkClass =
-    'rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted md:px-2.5 md:py-1.5'
+    'rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:px-2.5 md:py-1.5'
 
   return (
-    <header className="sticky top-0 z-50 border-b border-brand-navy/10 bg-background/95 backdrop-blur-sm">
-      <div className="relative mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
+      <div className="relative mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5">
         <Link
           href="/"
           className="shrink-0 text-lg font-bold tracking-tight text-brand-navy"

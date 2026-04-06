@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { createClient } from '@/app/lib/supabase/server'
 import { InsightCard } from '@/app/components/insights/InsightCard'
+import { LandingSectionHeader } from '@/app/components/landing/LandingSectionHeader'
+import { createClient } from '@/app/lib/supabase/server'
 import type { EduInsight } from '@/app/lib/types'
 
 export const metadata: Metadata = {
@@ -52,17 +53,16 @@ export default async function InsightsPage({ searchParams }: PageProps) {
   ].sort((a, b) => a.localeCompare(b, 'ko'))
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-brand-navy">교육 인사이트</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          외부 언론·기관의 기사 링크를 소개합니다. 본문 전재 없이 요약과 원문 링크만 제공하며, 저작권은
-          각 출처에 있습니다.
-        </p>
-      </div>
+    <main className="mx-auto w-full max-w-6xl px-4 py-12 md:py-16">
+      <LandingSectionHeader
+        label="Insights"
+        title="교육 인사이트"
+        titleLevel="h1"
+        description="외부 언론·기관의 기사 링크를 소개합니다. 본문 전재 없이 요약과 원문 링크만 제공하며, 저작권은 각 출처에 있습니다."
+      />
 
       {categories.length > 0 ? (
-        <div className="mb-8 flex flex-wrap gap-2">
+        <div className="mb-10 flex flex-wrap gap-2">
           <Link
             href="/insights"
             className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${

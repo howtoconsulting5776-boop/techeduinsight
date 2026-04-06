@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { InsightSection } from '@/app/components/insights/InsightSection'
+import { LandingSectionHeader } from '@/app/components/landing/LandingSectionHeader'
 import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
 import ProjectGallery from '@/app/components/ProjectGallery'
 import type { EduInsight, ProjectGalleryItem, ProjectWithProfile } from '@/app/lib/types'
@@ -116,38 +117,51 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="bg-brand-navy px-4 py-16 text-center md:py-24">
-        <h1 className="text-4xl font-bold text-white md:text-5xl">TechEdu Insight</h1>
-        <p className="mt-4 text-lg text-brand-sky md:text-xl">AI 프로젝트 공유 및 학습 플랫폼</p>
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-          <Link
-            href="#showcase"
-            className="inline-flex min-w-[200px] items-center justify-center rounded-lg bg-white px-6 py-3 text-sm font-semibold text-brand-navy shadow-sm transition-colors hover:bg-brand-bg"
-          >
-            프로젝트 둘러보기
-          </Link>
-          <Link
-            href="/lectures"
-            className="inline-flex min-w-[200px] items-center justify-center rounded-lg border-2 border-brand-sky bg-transparent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-sky/20"
-          >
-            강의 보러가기
-          </Link>
+      <section className="relative overflow-hidden bg-brand-navy px-4 py-20 text-center md:py-28">
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_85%_55%_at_50%_-25%,rgba(74,144,217,0.2),transparent_55%)]"
+          aria-hidden
+        />
+        <div className="relative mx-auto max-w-3xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-sky/90">
+            Learning platform
+          </p>
+          <h1 className="mt-5 text-4xl font-bold tracking-tight text-white text-balance md:text-5xl lg:text-[3.25rem] lg:leading-tight">
+            TechEdu Insight
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/78 md:text-lg">
+            AI 프로젝트 공유 및 학습 플랫폼
+          </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <Link
+              href="#showcase"
+              className="inline-flex min-w-[200px] items-center justify-center rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-brand-navy shadow-sm transition-colors hover:bg-brand-bg"
+            >
+              프로젝트 둘러보기
+            </Link>
+            <Link
+              href="/lectures"
+              className="inline-flex min-w-[200px] items-center justify-center rounded-xl border border-white/35 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur-[2px] transition-colors hover:border-brand-sky/50 hover:bg-brand-sky/15"
+            >
+              강의 보러가기
+            </Link>
+          </div>
+          {user ? (
+            <Link
+              href="/dashboard/projects/new"
+              className="mt-9 inline-block text-sm font-medium text-brand-sky/95 underline-offset-4 hover:text-white hover:underline"
+            >
+              + 내 프로젝트 등록하기
+            </Link>
+          ) : null}
         </div>
-        {user && (
-          <Link
-            href="/dashboard/projects/new"
-            className="mt-8 inline-block text-sm font-medium text-brand-sky underline-offset-4 hover:underline"
-          >
-            + 내 프로젝트 등록하기
-          </Link>
-        )}
       </section>
 
       {insightItems.length > 0 ? (
         <section
           id="insights"
           aria-label="교육 인사이트"
-          className="border-t border-b border-brand-navy/15 bg-muted/45"
+          className="border-t border-b border-brand-navy/10 bg-muted/40"
         >
           <InsightSection items={insightItems} />
         </section>
@@ -157,17 +171,12 @@ export default async function HomePage() {
         id="showcase"
         className={`scroll-mt-20 bg-background ${insightItems.length === 0 ? 'border-t border-border' : ''}`}
       >
-        <div className="mx-auto w-full max-w-6xl px-4 py-12 md:py-16">
-          <header className="mb-8 md:mb-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/70">
-              Showcase
-            </p>
-            <h2 className="mt-2 text-2xl font-bold text-brand-navy md:text-3xl">프로젝트 쇼케이스</h2>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              회원들이 공유한 공개 프로젝트를 검색하고, 태그로 골라볼 수 있습니다.
-            </p>
-            <div className="mt-6 h-px w-full max-w-md bg-gradient-to-r from-brand-navy/40 to-transparent" />
-          </header>
+        <div className="mx-auto w-full max-w-6xl px-4 py-14 md:py-20">
+          <LandingSectionHeader
+            label="Showcase"
+            title="프로젝트 쇼케이스"
+            description="회원들이 공유한 공개 프로젝트를 검색하고, 태그로 골라볼 수 있습니다."
+          />
           {showcaseQuery.error && items.length > 0 ? (
             <p className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
               작성자 표시를 불러오지 못했습니다. 마이그레이션(프로필 공개 조회) 적용 여부를 확인하세요.

@@ -65,7 +65,7 @@ export default function ProjectGallery({ projects }: Props) {
           placeholder="프로젝트 제목으로 검색…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full max-w-md"
+          className="h-10 w-full max-w-md rounded-xl border-border/90 px-3.5 shadow-sm"
         />
         {allTags.length > 0 && (
           <div className="w-full max-w-3xl">
@@ -119,7 +119,7 @@ export default function ProjectGallery({ projects }: Props) {
             return (
               <div
                 key={project.id}
-                className="group overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                className="group overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-navy/15 hover:shadow-lg"
               >
                 <Link href={detailHref} prefetch={false} className="block">
                   {thumbUrl ? (
