@@ -14,7 +14,8 @@
   --color-brand-teal: #00897b;
   --color-brand-amber: #f59e0b;
   --color-brand-bg: #f4f6fa;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Inter(라틴 우선) → Pretendard(한글 등) → 시스템 폴백 */
+  --font-sans: var(--font-inter), var(--font-pretendard), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import localFont from 'next/font/local'
 import { Geist_Mono, Inter } from 'next/font/google'
 import Header from '@/app/components/Header'
 import Footer from '@/app/components/Footer'
@@ -11,6 +12,14 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+})
+
+/** 한글: Inter에 없는 글리프는 뒤쪽 Pretendard로 렌더링 */
+const pretendard = localFont({
+  src: '../public/fonts/PretendardVariable.woff2',
+  variable: '--font-pretendard',
+  display: 'swap',
+  weight: '45 920',
 })
 
 const geistMono = Geist_Mono({
@@ -34,7 +43,10 @@ export default async function RootLayout({
   const supabaseAnonKey = getSupabaseAnonKey()
 
   return (
-    <html lang="ko" className={`${inter.variable} ${geistMono.variable} h-full`}>
+    <html
+      lang="ko"
+      className={`${inter.variable} ${pretendard.variable} ${geistMono.variable} h-full`}
+    >
       <body className="flex min-h-full flex-col font-sans">
         <SupabaseBrowserProvider url={supabaseUrl} anonKey={supabaseAnonKey}>
           <Header initialUser={user} />
