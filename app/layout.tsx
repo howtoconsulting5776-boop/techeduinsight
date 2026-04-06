@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
 import { Geist_Mono, Inter } from 'next/font/google'
-import Header from '@/app/components/Header'
+import Navbar from '@/app/components/Navbar'
 import Footer from '@/app/components/Footer'
 import { SupabaseBrowserProvider } from '@/app/components/SupabaseBrowserProvider'
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/app/lib/supabase/env'
@@ -49,7 +49,7 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col font-sans">
         <SupabaseBrowserProvider url={supabaseUrl} anonKey={supabaseAnonKey}>
-          <Header initialUser={user} />
+          <Navbar initialUser={user} />
           <div className="flex-1">{children}</div>
           <Footer />
         </SupabaseBrowserProvider>

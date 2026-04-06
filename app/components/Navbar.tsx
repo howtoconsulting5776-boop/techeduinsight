@@ -1,16 +1,46 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { useSupabaseBrowser } from '@/app/components/SupabaseBrowserProvider'
 import { logout } from '@/app/login/actions'
+import { cn } from '@/lib/utils'
 
-interface HeaderProps {
+interface NavbarProps {
   initialUser?: User | null
 }
 
-export default function Header({ initialUser = null }: HeaderProps) {
+type NavKey = 'showcase' | 'lectures' | 'insights' | 'dashboard'
+
+const NAV_LINKS: Array<{
+  href: string
+  label: string
+  key: NavKey
+  requireAuth?: boolean
+}> = [
+  { href: '/', label: '쇼케이스', key: 'showcase' },
+  { href: '/lectures', label: '강의', key: 'lectures' },
+  { href: '/insights', label: '인사이트', key: 'insights' },
+  { href: '/dashboard', label: '대시보드', key: 'dashboard', requireAuth: true },
+]
+
+/**
+ * 글로벌 네비게이션 (PRD: 네비게이션 일관성)
+ * — 전 페이지 동일 항목, 활성 표시, 비로그인 시 대시보드 미노출
+ */
+function resolveActiveNav(pathname: string | null): NavKey | null {
+  if (!pathname) return null
+  if (pathname === '/' || pathname.startsWith('/projects/')) return 'showcase'
+  if (pathname.startsWith('/lectures') || pathname.startsWith('/watch/')) return 'lectures'
+  if (pathname.startsWith('/insights')) return 'insights'
+  if (pathname.startsWith('/dashboard')) return 'dashboard'
+  return null
+}
+
+export default function Navbar({ initialUser = null }: NavbarProps) {
+  const pathname = usePathname()
   const supabase = useSupabaseBrowser()
   const [user, setUser] = useState<User | null>(initialUser)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -26,9 +56,14 @@ export default function Header({ initialUser = null }: HeaderProps) {
   }, [supabase])
 
   const closeMenu = () => setMenuOpen(false)
+  const activeKey = resolveActiveNav(pathname)
 
-  const navLinkClass =
-    'rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:px-2.5 md:py-1.5'
+  const linkBase =
+    'rounded-lg px-3 py-2.5 text-sm font-medium transition-colors md:px-2.5 md:py-1.5'
+  const linkInactive = 'text-muted-foreground hover:bg-muted hover:text-foreground'
+  const linkActive = 'bg-brand-navy/12 font-semibold text-brand-navy'
+
+  const visibleLinks = NAV_LINKS.filter((item) => !item.requireAuth || user)
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
@@ -64,19 +99,24 @@ export default function Header({ initialUser = null }: HeaderProps) {
             menuOpen ? 'flex' : 'hidden md:flex'
           }`}
         >
-          <nav className="flex flex-col gap-1 md:flex-row md:items-center md:gap-1">
-            <Link href="/" className={navLinkClass} onClick={closeMenu}>
-              쇼케이스
-            </Link>
-            <Link href="/lectures" className={navLinkClass} onClick={closeMenu}>
-              강의
-            </Link>
-            <Link href="/insights" className={navLinkClass} onClick={closeMenu}>
-              인사이트
-            </Link>
-            <Link href="/dashboard" className={navLinkClass} onClick={closeMenu}>
-              대시보드
-            </Link>
+          <nav
+            className="flex flex-col gap-1 md:flex-row md:items-center md:gap-1"
+            aria-label="주요 메뉴"
+          >
+            {visibleLinks.map((item) => {
+              const isActive = activeKey === item.key
+              return (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className={cn(linkBase, isActive ? linkActive : linkInactive)}
+                  onClick={closeMenu}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  {item.label}
+                </Link>
+              )
+            })}
           </nav>
 
           <div className="mt-2 border-t border-border pt-2 md:mt-0 md:ml-2 md:border-t-0 md:border-l md:pl-2 md:pt-0">
