@@ -20,7 +20,14 @@ function SignupForm() {
 
   if (pendingEmail) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
+        <img
+          src="/te-logo.png"
+          width={48}
+          height={48}
+          alt="TechEdu Insight"
+          className="mb-6 size-12 rounded-xl object-cover shadow-md ring-1 ring-black/5"
+        />
         <Card className="w-full max-w-sm">
           <CardHeader>
             <CardTitle className="text-2xl font-bold">이메일 확인이 필요합니다</CardTitle>
@@ -49,7 +56,21 @@ function SignupForm() {
       : '/login'
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
+      <div className="mb-8 flex w-full max-w-sm flex-col items-center text-center">
+        <img
+          src="/te-logo.png"
+          width={56}
+          height={56}
+          alt="TechEdu Insight"
+          className="mb-4 size-14 rounded-xl object-cover shadow-md ring-1 ring-black/5"
+        />
+        <h1 className="text-xl font-bold tracking-tight text-brand-navy">TechEdu Insight</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          AI 프로젝트 공유 및 학습 플랫폼에 오신 것을 환영합니다.
+        </p>
+      </div>
+
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">회원가입</CardTitle>

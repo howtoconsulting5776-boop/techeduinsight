@@ -26,11 +26,26 @@ function LoginForm() {
   const authErr = loginErrorMessage(searchParams.get('error'))
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
+      <div className="mb-8 flex w-full max-w-sm flex-col items-center text-center">
+        <img
+          src="/te-logo.png"
+          width={56}
+          height={56}
+          alt="TechEdu Insight"
+          className="mb-4 size-14 rounded-xl object-cover shadow-md ring-1 ring-black/5"
+        />
+        <h1 className="text-xl font-bold tracking-tight text-brand-navy">TechEdu Insight</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          AI 프로젝트 공유 및 학습 플랫폼입니다. 로그인하면 쇼케이스 둘러보기, 강의 시청, 내
+          프로젝트 등록 등을 이용할 수 있습니다.
+        </p>
+      </div>
+
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">로그인</CardTitle>
-          <CardDescription>이메일로 로그인하세요.</CardDescription>
+          <CardDescription>이메일과 비밀번호로 로그인하세요.</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -69,7 +84,15 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
+          <img
+            src="/te-logo.png"
+            width={56}
+            height={56}
+            alt=""
+            className="mb-6 size-14 rounded-xl object-cover opacity-90 ring-1 ring-black/5"
+            aria-hidden
+          />
           <p className="text-sm text-muted-foreground">불러오는 중…</p>
         </main>
       }
