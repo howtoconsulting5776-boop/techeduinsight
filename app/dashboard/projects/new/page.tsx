@@ -1,7 +1,7 @@
 'use client'
 
-import { useActionState, useState, useTransition } from 'react'
-import { createProject } from './actions'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { ThumbnailCropField } from '@/app/components/ThumbnailCropField'
 import {
   Card,
@@ -17,16 +17,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
-type ActionState = { error?: string } | null
-
 export default function NewProjectPage() {
+  const router = useRouter()
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
-  const [isPending, startTransition] = useTransition()
-  const [state, formAction, actionPending] = useActionState<ActionState, FormData>(
-    createProject,
-    null,
-  )
-  const pending = actionPending || isPending
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   return (
     <main className="flex min-h-screen items-start justify-center bg-background px-4 py-12">
@@ -37,21 +32,41 @@ export default function NewProjectPage() {
         </CardHeader>
 
         <form
-          action={formAction}
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault()
-            const form = e.currentTarget
-            const fd = new FormData(form)
-            if (thumbnailFile) {
-              fd.set('thumbnail', thumbnailFile)
+            setError(null)
+            setPending(true)
+            try {
+              const form = e.currentTarget
+              const fd = new FormData(form)
+              if (thumbnailFile) {
+                fd.set('thumbnail', thumbnailFile)
+              }
+              const res = await fetch('/api/projects', {
+                method: 'POST',
+                body: fd,
+              })
+              const data = (await res.json()) as {
+                ok: boolean
+                error?: string
+              }
+              if (!res.ok || !data.ok) {
+                setError(data.error ?? '등록에 실패했습니다.')
+                return
+              }
+              router.push('/dashboard/projects')
+              router.refresh()
+            } catch {
+              setError('네트워크 오류로 등록할 수 없습니다.')
+            } finally {
+              setPending(false)
             }
-            startTransition(() => formAction(fd))
           }}
         >
           <CardContent className="space-y-5">
-            {state?.error && (
+            {error && (
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {state.error}
+                {error}
               </p>
             )}
 
