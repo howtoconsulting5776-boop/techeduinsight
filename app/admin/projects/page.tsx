@@ -44,38 +44,53 @@ export default function AdminProjectsPage() {
   async function setPublished(id: string, published: boolean) {
     setBusyId(id)
     setError(null)
-    const res = await adminSetProjectPublished(id, published)
-    setBusyId(null)
-    if (!res.ok) {
-      setError(res.error)
-      return
+    try {
+      const res = await adminSetProjectPublished(id, published)
+      if (!res.ok) {
+        setError(res.error)
+        return
+      }
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '요청에 실패했습니다.')
+    } finally {
+      setBusyId(null)
     }
-    void load()
   }
 
   async function toggleIframe(id: string, next: boolean) {
     setBusyId(id)
     setError(null)
-    const res = await adminSetProjectIframeAllowed(id, next)
-    setBusyId(null)
-    if (!res.ok) {
-      setError(res.error)
-      return
+    try {
+      const res = await adminSetProjectIframeAllowed(id, next)
+      if (!res.ok) {
+        setError(res.error)
+        return
+      }
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '요청에 실패했습니다.')
+    } finally {
+      setBusyId(null)
     }
-    void load()
   }
 
   async function handleDeleteProject(id: string) {
     if (!confirm('이 프로젝트를 삭제할까요? 되돌릴 수 없습니다.')) return
     setBusyId(id)
     setError(null)
-    const res = await adminDeleteProject(id)
-    setBusyId(null)
-    if (!res.ok) {
-      setError(res.error)
-      return
+    try {
+      const res = await adminDeleteProject(id)
+      if (!res.ok) {
+        setError(res.error)
+        return
+      }
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '요청에 실패했습니다.')
+    } finally {
+      setBusyId(null)
     }
-    void load()
   }
 
   if (loading) {
@@ -139,7 +154,7 @@ export default function AdminProjectsPage() {
                       disabled={busyId === p.id}
                       onClick={() => void setPublished(p.id, true)}
                     >
-                      공개
+                      {busyId === p.id ? '처리 중…' : '공개'}
                     </button>
                   ) : (
                     <button
@@ -148,7 +163,7 @@ export default function AdminProjectsPage() {
                       disabled={busyId === p.id}
                       onClick={() => void setPublished(p.id, false)}
                     >
-                      비공개
+                      {busyId === p.id ? '처리 중…' : '비공개'}
                     </button>
                   )}
                   <button
@@ -157,7 +172,9 @@ export default function AdminProjectsPage() {
                     disabled={busyId === p.id}
                     onClick={() => void toggleIframe(p.id, !p.iframe_allowed)}
                   >
-                    iframe {p.iframe_allowed ? '차단' : '허용'}
+                    {busyId === p.id
+                      ? '처리 중…'
+                      : `iframe ${p.iframe_allowed ? '차단' : '허용'}`}
                   </button>
                   <Link
                     href={`/dashboard/projects/${p.id}/edit`}
@@ -171,7 +188,7 @@ export default function AdminProjectsPage() {
                     disabled={busyId === p.id}
                     onClick={() => void handleDeleteProject(p.id)}
                   >
-                    삭제
+                    {busyId === p.id ? '처리 중…' : '삭제'}
                   </button>
                 </td>
               </tr>

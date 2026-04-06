@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/app/lib/supabase/server'
+import { createServiceRoleClient } from '@/app/lib/supabase/service'
 
-async function requireAdminSupabase() {
+async function requireAdminOrRedirect() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -18,18 +19,17 @@ async function requireAdminSupabase() {
     .single()
 
   if (profile?.role !== 'ADMIN') redirect('/dashboard')
-
-  return supabase
 }
 
 export async function approveProject(formData: FormData) {
-  const supabase = await requireAdminSupabase()
+  await requireAdminOrRedirect()
   const id = (formData.get('id') as string)?.trim()
   if (!id) redirect('/dashboard/admin/projects')
 
   const iframeAllowed = formData.get('iframe_allowed') === 'on'
 
-  const { error } = await supabase
+  const svc = createServiceRoleClient()
+  const { error } = await svc
     .from('projects')
     .update({ status: 'published', iframe_allowed: iframeAllowed })
     .eq('id', id)
@@ -38,19 +38,21 @@ export async function approveProject(formData: FormData) {
   if (error) redirect(`/dashboard/admin/projects?err=${encodeURIComponent(error.message)}`)
 
   revalidatePath('/dashboard/admin/projects')
+  revalidatePath('/admin/projects')
   revalidatePath('/dashboard/projects')
   revalidatePath('/')
   revalidatePath(`/projects/${id}`)
 }
 
 export async function updatePublishedIframe(formData: FormData) {
-  const supabase = await requireAdminSupabase()
+  await requireAdminOrRedirect()
   const id = (formData.get('id') as string)?.trim()
   if (!id) redirect('/dashboard/admin/projects')
 
   const iframeAllowed = formData.get('iframe_allowed') === 'on'
 
-  const { error } = await supabase
+  const svc = createServiceRoleClient()
+  const { error } = await svc
     .from('projects')
     .update({ iframe_allowed: iframeAllowed })
     .eq('id', id)
@@ -59,5 +61,6 @@ export async function updatePublishedIframe(formData: FormData) {
   if (error) redirect(`/dashboard/admin/projects?err=${encodeURIComponent(error.message)}`)
 
   revalidatePath('/dashboard/admin/projects')
+  revalidatePath('/admin/projects')
   revalidatePath(`/projects/${id}`)
 }

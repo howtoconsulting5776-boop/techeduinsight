@@ -242,10 +242,12 @@ export async function adminDeleteProject(
   const ctx = await getAdminClientOrNull()
   if (!ctx) return { ok: false, error: '권한이 없습니다.' }
 
-  const { error } = await ctx.supabase.from('projects').delete().eq('id', projectId)
+  const svc = createServiceRoleClient()
+  const { error } = await svc.from('projects').delete().eq('id', projectId)
   if (error) return { ok: false, error: error.message }
 
   revalidatePath('/admin/projects')
+  revalidatePath('/dashboard/admin/projects')
   revalidatePath('/dashboard/projects')
   revalidatePath(`/projects/${projectId}`)
   revalidatePath('/')
@@ -259,13 +261,16 @@ export async function adminSetProjectPublished(
   const ctx = await getAdminClientOrNull()
   if (!ctx) return { ok: false, error: '권한이 없습니다.' }
 
-  const { error } = await ctx.supabase
+  const svc = createServiceRoleClient()
+  const { error } = await svc
     .from('projects')
     .update({ status: published ? 'published' : 'draft' })
     .eq('id', projectId)
 
   if (error) return { ok: false, error: error.message }
   revalidatePath('/admin/projects')
+  revalidatePath('/dashboard/admin/projects')
+  revalidatePath('/dashboard/projects')
   revalidatePath('/')
   revalidatePath(`/projects/${projectId}`)
   return { ok: true }
@@ -278,13 +283,15 @@ export async function adminSetProjectIframeAllowed(
   const ctx = await getAdminClientOrNull()
   if (!ctx) return { ok: false, error: '권한이 없습니다.' }
 
-  const { error } = await ctx.supabase
+  const svc = createServiceRoleClient()
+  const { error } = await svc
     .from('projects')
     .update({ iframe_allowed: iframeAllowed })
     .eq('id', projectId)
 
   if (error) return { ok: false, error: error.message }
   revalidatePath('/admin/projects')
+  revalidatePath('/dashboard/admin/projects')
   revalidatePath(`/projects/${projectId}`)
   return { ok: true }
 }
