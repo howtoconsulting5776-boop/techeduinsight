@@ -4,6 +4,7 @@ import { Geist_Mono, Inter } from 'next/font/google'
 import Navbar from '@/app/components/Navbar'
 import Footer from '@/app/components/Footer'
 import { SupabaseBrowserProvider } from '@/app/components/SupabaseBrowserProvider'
+import { getMetadataBase } from '@/app/lib/site-metadata'
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/app/lib/supabase/env'
 import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
 import './globals.css'
@@ -27,9 +28,24 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
+const siteDescription = 'AI 프로젝트 공유 및 학습 플랫폼'
+
 export const metadata: Metadata = {
-  title: 'TechEdu Insight',
-  description: 'AI 프로젝트 공유 및 학습 플랫폼',
+  metadataBase: getMetadataBase(),
+  title: { default: 'TechEdu Insight', template: '%s | TechEdu Insight' },
+  description: siteDescription,
+  openGraph: {
+    title: 'TechEdu Insight',
+    description: siteDescription,
+    siteName: 'TechEdu Insight',
+    locale: 'ko_KR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TechEdu Insight',
+    description: siteDescription,
+  },
 }
 
 export default async function RootLayout({

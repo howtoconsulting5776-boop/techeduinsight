@@ -3,13 +3,12 @@ import type { ProjectGalleryItem, ProjectWithProfile } from '@/app/lib/types'
 
 export type ShowcaseGalleryResult = {
   projects: ProjectGalleryItem[]
-  /** 프로필 조인 실패 후 fallback으로 목록만 표시 중 */
-  hadProfileJoinError: boolean
 }
 
 /**
  * 공개(발행) 프로젝트를 쇼케이스용 갤러리 아이템으로 조회합니다.
- * `limit`을 주면 최근 게시 순으로 상한만큼만 가져옵니다(랜딩 미리보기).
+ * 작성자 표시는 `showcase_owner_profiles` RPC로 채웁니다(임베드 조인 대신).
+ * `limit`을 주면 최근 게시 순으로 상한만큼만 가져옵니다.
  */
 export async function getShowcaseGalleryItems(
   supabase: SupabaseClient,
@@ -18,46 +17,48 @@ export async function getShowcaseGalleryItems(
 ): Promise<ShowcaseGalleryResult> {
   const limit = options?.limit
 
-  let mainQuery = supabase
+  let q = supabase
     .from('projects')
-    .select('*, profiles(display_name, avatar_url)')
+    .select('*')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
-  if (limit != null) mainQuery = mainQuery.limit(limit)
+  if (limit != null) q = q.limit(limit)
 
-  const showcaseQuery = await mainQuery
+  const { data: rows, error: projErr } = await q
 
-  let items: ProjectWithProfile[]
-
-  if (showcaseQuery.error) {
-    const msg = showcaseQuery.error.message
+  if (projErr) {
+    const msg = projErr.message
     const soft = /fetch|timeout|aborted|network|ECONNRESET|UND_ERR/i.test(msg)
     if (soft) console.warn('[showcase] projects (network):', msg)
     else console.error('[showcase] projects select failed:', msg)
-
-    let fbQuery = supabase
-      .from('projects')
-      .select('*')
-      .eq('status', 'published')
-      .order('created_at', { ascending: false })
-    if (limit != null) fbQuery = fbQuery.limit(limit)
-    const fallback = await fbQuery
-
-    if (fallback.error) {
-      const fbMsg = fallback.error.message
-      const fbSoft = /fetch|timeout|aborted|network|ECONNRESET|UND_ERR/i.test(fbMsg)
-      if (fbSoft) console.warn('[showcase] projects fallback (network):', fbMsg)
-      else console.error('[showcase] projects fallback failed:', fbMsg)
-      items = []
-    } else {
-      items = (fallback.data ?? []).map((row) => ({
-        ...row,
-        profiles: { display_name: null, avatar_url: null },
-      })) as ProjectWithProfile[]
-    }
-  } else {
-    items = (showcaseQuery.data ?? []) as ProjectWithProfile[]
+    return { projects: [] }
   }
+
+  const raw = rows ?? []
+  const ownerIds = [...new Set(raw.map((r) => r.owner_id as string))]
+
+  const profileMap = new Map<string, { display_name: string | null; avatar_url: string | null }>()
+  if (ownerIds.length > 0) {
+    const { data: profs, error: rpcErr } = await supabase.rpc('showcase_owner_profiles', {
+      p_owner_ids: ownerIds,
+    })
+    if (rpcErr) {
+      console.warn('[showcase] showcase_owner_profiles:', rpcErr.message)
+    } else {
+      for (const row of profs ?? []) {
+        const r = row as { id: string; display_name: string | null; avatar_url: string | null }
+        profileMap.set(r.id, { display_name: r.display_name, avatar_url: r.avatar_url })
+      }
+    }
+  }
+
+  const items: ProjectWithProfile[] = raw.map((row) => ({
+    ...row,
+    profiles: profileMap.get(row.owner_id as string) ?? {
+      display_name: null,
+      avatar_url: null,
+    },
+  })) as ProjectWithProfile[]
 
   const ids = items.map((p) => p.id)
   const site = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') ?? ''
@@ -113,8 +114,5 @@ export async function getShowcaseGalleryItems(
     }
   })
 
-  return {
-    projects,
-    hadProfileJoinError: Boolean(showcaseQuery.error && items.length > 0),
-  }
+  return { projects }
 }

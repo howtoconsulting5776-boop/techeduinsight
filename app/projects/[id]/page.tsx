@@ -19,15 +19,30 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const { id } = await params
   const { supabase, user } = await getCachedSupabaseAuth()
 
-  const { data: project, error } = await supabase
-    .from('projects')
-    .select('*, profiles(display_name, avatar_url)')
-    .eq('id', id)
-    .single()
+  const { data: projectRow, error } = await supabase.from('projects').select('*').eq('id', id).single()
 
-  if (error || !project) notFound()
+  if (error || !projectRow) notFound()
 
-  const p = project as ProjectWithProfile
+  let profiles: ProjectWithProfile['profiles'] = { display_name: null, avatar_url: null }
+  const ownerId = projectRow.owner_id as string
+  const projectStatus = projectRow.status as string
+
+  if (projectStatus === 'published') {
+    const { data: profs } = await supabase.rpc('showcase_owner_profiles', {
+      p_owner_ids: [ownerId],
+    })
+    const row = (profs ?? [])[0] as { display_name: string | null; avatar_url: string | null } | undefined
+    if (row) profiles = { display_name: row.display_name, avatar_url: row.avatar_url }
+  } else if (user?.id === ownerId) {
+    const { data: pr } = await supabase
+      .from('profiles')
+      .select('display_name, avatar_url')
+      .eq('id', ownerId)
+      .single()
+    if (pr) profiles = pr
+  }
+
+  const p = { ...projectRow, profiles } as ProjectWithProfile
 
   let viewCount = p.view_count
   const { data: rpcViewCount, error: incErr } = await supabase.rpc('increment_project_view', {

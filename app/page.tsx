@@ -6,10 +6,7 @@ import { getShowcaseGalleryItems } from '@/app/lib/showcase-gallery-data'
 export default async function HomePage() {
   const { supabase, user } = await getCachedSupabaseAuth()
 
-  const { projects: galleryItems, hadProfileJoinError } = await getShowcaseGalleryItems(
-    supabase,
-    user,
-  )
+  const { projects: galleryItems } = await getShowcaseGalleryItems(supabase, user)
 
   return (
     <>
@@ -46,11 +43,6 @@ export default async function HomePage() {
             title="프로젝트 쇼케이스"
             description="회원들이 공유한 공개 프로젝트를 검색하고, 태그로 골라볼 수 있습니다."
           />
-          {hadProfileJoinError ? (
-            <p className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
-              작성자 표시를 불러오지 못했습니다. 마이그레이션(프로필 공개 조회) 적용 여부를 확인하세요.
-            </p>
-          ) : null}
           <ProjectGallery projects={galleryItems} />
         </div>
       </section>
