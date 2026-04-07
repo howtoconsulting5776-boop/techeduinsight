@@ -145,9 +145,3 @@
     @apply font-sans;
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-video-bg {
-    display: none;
-  }
-}

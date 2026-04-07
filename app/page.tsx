@@ -14,49 +14,12 @@ export default async function HomePage() {
   return (
     <>
       <section className="relative flex min-h-[min(520px,70svh)] flex-col items-center justify-center overflow-hidden bg-brand-navy px-4 py-14 text-center md:min-h-[min(600px,78svh)] md:py-20">
-        <video
-          className="hero-video-bg pointer-events-none absolute inset-0 z-0 h-full w-full bg-brand-navy object-contain object-center"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          aria-hidden
-        >
-          <source src="/hero-whale-bg.mp4" type="video/mp4" />
-        </video>
-        {/* object-contain 여백·인코딩 테두리로 보이는 검은 선 가림 */}
         <div
-          className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-[max(12px,min(3.5vw,32px))] bg-brand-navy"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_65%_at_50%_50%,rgba(74,144,217,0.22),transparent_62%)]"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[max(12px,min(3.5vw,32px))] bg-brand-navy"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[max(10px,min(2.5vh,24px))] bg-brand-navy"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[max(10px,min(2.5vh,24px))] bg-brand-navy"
-          aria-hidden
-        />
-        {/* Veo 등 코너 워터마크 가림 (코어를 더 진·넓게) */}
-        <div
-          className="pointer-events-none absolute left-0 top-0 z-[2] h-[min(48%,340px)] w-[min(62%,420px)] bg-[radial-gradient(ellipse_120%_120%_at_0%_0%,#1B3A6B_0%,#1B3A6B_14%,rgba(27,58,107,0.98)_28%,rgba(27,58,107,0.88)_44%,rgba(27,58,107,0.45)_62%,transparent_82%)]"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute bottom-0 right-0 z-[2] h-[min(48%,340px)] w-[min(62%,420px)] bg-[radial-gradient(ellipse_120%_120%_at_100%_100%,#1B3A6B_0%,#1B3A6B_14%,rgba(27,58,107,0.98)_28%,rgba(27,58,107,0.88)_44%,rgba(27,58,107,0.45)_62%,transparent_82%)]"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-0 z-[3] bg-brand-navy/40"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-0 z-[4] bg-[radial-gradient(ellipse_75%_60%_at_50%_45%,rgba(74,144,217,0.12),transparent_65%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_96%_78%_at_0%_100%,rgba(27,58,107,0.55),transparent_55%)]"
           aria-hidden
         />
         <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-col items-center">
