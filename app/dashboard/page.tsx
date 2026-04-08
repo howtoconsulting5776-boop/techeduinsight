@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/app/lib/supabase/server'
 import { ProfileDisplayNameForm } from '@/app/dashboard/ProfileDisplayNameForm'
@@ -67,10 +68,12 @@ export default async function DashboardPage() {
           {/* Avatar */}
           <div className="flex items-center gap-4">
             {profile?.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={profile.avatar_url}
                 alt={displayName}
+                width={56}
+                height={56}
+                unoptimized
                 className="h-14 w-14 rounded-full object-cover"
               />
             ) : (

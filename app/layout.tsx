@@ -3,6 +3,7 @@ import localFont from 'next/font/local'
 import { Geist_Mono, Inter } from 'next/font/google'
 import Navbar from '@/app/components/Navbar'
 import Footer from '@/app/components/Footer'
+import { ThirdPartyScripts } from '@/app/components/ThirdPartyScripts'
 import { SupabaseBrowserProvider } from '@/app/components/SupabaseBrowserProvider'
 import { getMetadataBase } from '@/app/lib/site-metadata'
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/app/lib/supabase/env'
@@ -64,6 +65,7 @@ export default async function RootLayout({
       className={`${inter.variable} ${pretendard.variable} ${geistMono.variable} h-full`}
     >
       <body className="flex min-h-full flex-col font-sans">
+        <ThirdPartyScripts />
         <SupabaseBrowserProvider url={supabaseUrl} anonKey={supabaseAnonKey}>
           <Navbar initialUser={user} />
           <div className="flex-1">{children}</div>

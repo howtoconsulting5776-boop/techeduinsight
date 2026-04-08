@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/app/lib/supabase/server'
+import { THUMBNAIL_UPLOAD_CACHE_CONTROL } from '@/app/lib/storage'
 import { createServiceRoleClient } from '@/app/lib/supabase/service'
 
 async function viewerIsAdmin(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
@@ -50,7 +51,10 @@ export async function updateProject(
 
     const { error: uploadError } = await supabase.storage
       .from('thumbnails')
-      .upload(filePath, thumbnailFile, { upsert: false })
+      .upload(filePath, thumbnailFile, {
+        upsert: false,
+        cacheControl: THUMBNAIL_UPLOAD_CACHE_CONTROL,
+      })
 
     if (uploadError) {
       return { error: `썸네일 업로드 실패: ${uploadError.message}` }

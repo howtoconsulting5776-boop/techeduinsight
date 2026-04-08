@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { Lock } from 'lucide-react'
 import type { LectureListItem } from '@/app/lectures/lecture-catalog'
@@ -25,11 +26,12 @@ export function LectureCardLink({ item }: { item: LectureListItem }) {
         }`}
       >
         {item.thumbnailUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={item.thumbnailUrl}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+            className="object-cover"
           />
         ) : null}
         <div

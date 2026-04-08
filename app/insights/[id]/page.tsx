@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/app/lib/supabase/server'
@@ -84,11 +85,14 @@ export default async function InsightDetailPage({ params }: PageProps) {
 
         {insight.image_url ? (
           <div className="relative mt-8 aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={insight.image_url}
               alt=""
-              className="h-full w-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, 672px"
+              className="object-cover"
+              priority
+              unoptimized
             />
           </div>
         ) : null}

@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
-import { ProjectCardThumbnail } from '@/app/components/ProjectCardThumbnail'
+import {
+  ProjectCardThumbnail,
+  PROJECT_DETAIL_IMAGE_SIZES,
+} from '@/app/components/ProjectCardThumbnail'
 import { ProjectCommentForm } from '@/app/components/ProjectCommentForm'
 import { ProjectCommentThread } from '@/app/components/ProjectCommentThread'
 import { ProjectSocialBar } from '@/app/components/ProjectSocialBar'
@@ -155,7 +158,12 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
         <div className="overflow-hidden rounded-xl border">
           {thumbUrl ? (
-            <ProjectCardThumbnail src={thumbUrl} alt={p.title} />
+            <ProjectCardThumbnail
+              src={thumbUrl}
+              alt={p.title}
+              sizes={PROJECT_DETAIL_IMAGE_SIZES}
+              priority
+            />
           ) : (
             <div className="aspect-video w-full bg-[linear-gradient(135deg,var(--brand-navy),var(--brand-sky))]" />
           )}

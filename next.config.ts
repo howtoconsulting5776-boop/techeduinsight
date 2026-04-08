@@ -1,6 +1,11 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 // Pin Turbopack root to this app directory (avoids wrong workspace inference)
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
@@ -33,6 +38,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: supabaseStorageHostname(),
+        pathname: "/storage/v1/render/image/**",
+      },
+      {
+        protocol: "https",
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
@@ -40,4 +50,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

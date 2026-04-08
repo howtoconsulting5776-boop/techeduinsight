@@ -6,6 +6,7 @@ import {
   isMissingVideosThumbnailColumnError,
   VIDEO_THUMB_MIGRATION_HINT,
 } from '@/app/lib/supabase/schema-errors'
+import { THUMBNAIL_UPLOAD_CACHE_CONTROL } from '@/app/lib/storage'
 import type { VideoRole } from '@/app/lib/types'
 
 type ActionResult = { error: string } | null
@@ -37,6 +38,7 @@ async function uploadLectureThumbnail(
   const { error } = await supabase.storage.from('thumbnails').upload(path, body, {
     contentType: file.type || undefined,
     upsert: false,
+    cacheControl: THUMBNAIL_UPLOAD_CACHE_CONTROL,
   })
   if (error) throw new Error(error.message)
   return path

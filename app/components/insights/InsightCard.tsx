@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import type { EduInsight } from '@/app/lib/types'
 
@@ -22,12 +23,13 @@ export function InsightCard({ insight }: { insight: EduInsight }) {
         aria-label={`${insight.title} 상세 보기`}
       >
         {insight.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={insight.image_url}
             alt=""
-            className="h-full w-full object-cover"
-            loading="lazy"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,var(--brand-navy),var(--brand-sky))] text-xs font-medium text-white/90">

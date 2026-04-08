@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 import { adminListVideos, adminDeleteVideo } from '@/app/admin/actions'
 import { createLectureVideoAction, updateLectureVideoAction } from '@/app/admin/videos/actions'
@@ -185,11 +186,12 @@ export default function AdminVideosPage() {
                     <td className="px-3 py-2">
                       <div className="relative h-14 w-24 overflow-hidden rounded-md bg-muted">
                         {thumbPreview(v.thumbnail_path) ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <Image
                             src={thumbPreview(v.thumbnail_path)!}
                             alt=""
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="96px"
+                            className="object-cover"
                           />
                         ) : (
                           <span className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
@@ -343,10 +345,11 @@ function EditVideoRow({
           {video.thumbnail_path && thumbPreview(video.thumbnail_path) ? (
             <p className="text-xs text-muted-foreground">
               현재 썸네일:{' '}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={thumbPreview(video.thumbnail_path)!}
                 alt=""
+                width={200}
+                height={64}
                 className="mt-1 inline-block h-16 max-w-[200px] rounded border object-cover align-middle"
               />
             </p>

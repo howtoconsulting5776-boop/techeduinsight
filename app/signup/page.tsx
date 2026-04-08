@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import Image from 'next/image'
 import Link from 'next/link'
 
 function SignupForm() {
@@ -21,7 +22,7 @@ function SignupForm() {
   if (pendingEmail) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
-        <img
+        <Image
           src="/te-logo.png"
           width={48}
           height={48}
@@ -58,11 +59,12 @@ function SignupForm() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
       <div className="mb-8 flex w-full max-w-sm flex-col items-center text-center">
-        <img
+        <Image
           src="/te-logo.png"
           width={56}
           height={56}
           alt="TechEdu Insight"
+          priority
           className="mb-4 size-14 rounded-xl object-cover shadow-md ring-1 ring-black/5"
         />
         <h1 className="text-xl font-bold tracking-tight text-brand-navy">TechEdu Insight</h1>

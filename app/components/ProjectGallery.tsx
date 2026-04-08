@@ -118,7 +118,7 @@ export default function ProjectGallery({ projects, showFilters = true }: Props) 
               : 'grid grid-cols-1 gap-6 md:grid-cols-3'
           }
         >
-          {filtered.map((project) => {
+          {filtered.map((project, index) => {
             const thumbUrl = getThumbnailUrl(project.thumbnail_path)
             const dn = project.profiles?.display_name
             const author =
@@ -133,7 +133,12 @@ export default function ProjectGallery({ projects, showFilters = true }: Props) 
               >
                 <Link href={detailHref} prefetch={false} className="block">
                   {thumbUrl ? (
-                    <ProjectCardThumbnail src={thumbUrl} alt={project.title} hoverScale />
+                    <ProjectCardThumbnail
+                      src={thumbUrl}
+                      alt={project.title}
+                      hoverScale
+                      priority={index < 3}
+                    />
                   ) : (
                     <ThumbnailPlaceholder />
                   )}
