@@ -1,13 +1,35 @@
+import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { createClient } from '@/app/lib/supabase/server'
+import { buildPrivatePageMetadata } from '@/app/lib/seo'
 import VideoPlayer from './VideoPlayer'
 
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data: catalog, error } = await supabase.rpc('list_lectures_for_catalog')
+  if (error) {
+    return buildPrivatePageMetadata({
+      title: '강의 시청',
+      description: 'TechEdu Insight 강의 시청',
+    })
+  }
+  const rows = (catalog ?? []) as Array<{ id: string; title: string }>
+  const row = rows.find((r) => r.id === id)
+  const title = row ? `${row.title} 시청` : '강의 시청'
+  return buildPrivatePageMetadata({
+    title,
+    description:
+      '로그인 후 시청 가능한 강의 페이지입니다. 개인 시청 맥락 보호를 위해 검색 색인에서 제외됩니다.',
+  })
 }
 
 async function appOrigin(): Promise<string> {

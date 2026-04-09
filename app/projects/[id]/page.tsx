@@ -1,6 +1,7 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
+import { createClient, getCachedSupabaseAuth } from '@/app/lib/supabase/server'
 import {
   ProjectCardThumbnail,
   PROJECT_DETAIL_IMAGE_SIZES,
@@ -8,6 +9,7 @@ import {
 import { ProjectCommentForm } from '@/app/components/ProjectCommentForm'
 import { ProjectCommentThread } from '@/app/components/ProjectCommentThread'
 import { ProjectSocialBar } from '@/app/components/ProjectSocialBar'
+import { buildPrivatePageMetadata, buildPublicPageMetadata } from '@/app/lib/seo'
 import { getThumbnailUrl } from '@/app/lib/storage'
 import type { ProjectCommentRow, ProjectWithProfile } from '@/app/lib/types'
 
@@ -17,6 +19,48 @@ interface PageProps {
 
 /** 세션·댓글 등 사용자별 데이터가 섞이지 않도록 캐시 비활성화 */
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('projects')
+    .select('title, description, status, thumbnail_path')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (!data) {
+    return buildPrivatePageMetadata({
+      title: '프로젝트',
+      description: 'TechEdu Insight 공개 프로젝트',
+    })
+  }
+
+  const status = data.status as string
+  if (status !== 'published') {
+    return buildPrivatePageMetadata({
+      title: data.title,
+      description: '비공개 프로젝트(초안) 페이지입니다.',
+    })
+  }
+
+  const descRaw = typeof data.description === 'string' ? data.description.trim() : ''
+  const description =
+    descRaw.length > 0
+      ? descRaw.slice(0, 155) + (descRaw.length > 155 ? '…' : '')
+      : `${data.title} — TechEdu Insight 프로젝트 쇼케이스`
+
+  const og = getThumbnailUrl(data.thumbnail_path as string | null)
+
+  return buildPublicPageMetadata({
+    title: data.title,
+    description,
+    path: `/projects/${id}`,
+    extraKeywords: ['프로젝트 쇼케이스', '포트폴리오'],
+    ogImage: og,
+    useTitleTemplate: true,
+  })
+}
 
 export default async function ProjectDetailPage({ params }: PageProps) {
   const { id } = await params

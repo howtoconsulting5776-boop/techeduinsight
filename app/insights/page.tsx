@@ -1,14 +1,18 @@
-import type { Metadata } from 'next'
 import Link from 'next/link'
 import { InsightCard } from '@/app/components/insights/InsightCard'
 import { LandingSectionHeader } from '@/app/components/landing/LandingSectionHeader'
 import { createClient } from '@/app/lib/supabase/server'
+import { buildPublicPageMetadata } from '@/app/lib/seo'
 import type { EduInsight } from '@/app/lib/types'
 
-export const metadata: Metadata = {
-  title: '인사이트 | TechEdu Insight',
-  description: '테크·교육 관련 외부 기사 큐레이션. 원문은 각 출처에서 확인하세요.',
-}
+export const metadata = buildPublicPageMetadata({
+  title: '교육 인사이트·뉴스 큐레이션',
+  description:
+    'Edutech·AI·학원·입시·진로 관련 외부 기사·뉴스 큐레이션. TechEdu Insight 인사이트에서 요약과 원문 링크를 확인하세요.',
+  path: '/insights',
+  extraKeywords: ['교육 뉴스', '기사 큐레이션', '에듀 인사이트'],
+  useTitleTemplate: true,
+})
 
 interface PageProps {
   searchParams: Promise<{ category?: string }>

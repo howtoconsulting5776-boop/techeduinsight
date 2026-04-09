@@ -1,5 +1,12 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { requireAdmin } from '@/app/lib/auth/admin'
+import { buildPrivatePageMetadata } from '@/app/lib/seo'
+
+export const metadata: Metadata = buildPrivatePageMetadata({
+  title: '관리자',
+  description: 'TechEdu Insight 관리자 전용 영역입니다. 검색 색인에서 제외됩니다.',
+})
 
 const nav = [
   { href: '/admin/users', label: '사용자 관리' },

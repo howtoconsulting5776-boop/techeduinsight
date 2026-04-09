@@ -1,10 +1,20 @@
 import { createClient } from '@/app/lib/supabase/server'
+import { buildPublicPageMetadata } from '@/app/lib/seo'
 import {
   mapCatalogRowsToLectureListItems,
   type LectureCatalogRow,
 } from '@/app/lib/lecture-list-items'
 import type { UserRole } from '@/app/lib/types'
 import LectureCatalog, { type LectureListItem } from './lecture-catalog'
+
+export const metadata = buildPublicPageMetadata({
+  title: '바이트코딩·온라인 강의',
+  description:
+    'TechEdu Insight 바이트코딩 강의 카탈로그. Edutech·AI 실습형 학습, 학원·입시·진로 준비에 맞춘 멤버십 강의를 만나보세요.',
+  path: '/lectures',
+  extraKeywords: ['온라인 코딩', '영상 강의', 'PREMIUM'],
+  useTitleTemplate: true,
+})
 
 export default async function LecturesPage() {
   const supabase = await createClient()

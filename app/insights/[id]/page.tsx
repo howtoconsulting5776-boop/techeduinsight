@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/app/lib/supabase/server'
+import { buildPublicPageMetadata, buildPrivatePageMetadata } from '@/app/lib/seo'
 import type { EduInsight } from '@/app/lib/types'
 
 interface PageProps {
@@ -24,29 +25,43 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const supabase = await createClient()
   const { data } = await supabase
     .from('edu_insights')
-    .select('title, summary')
+    .select('title, summary, image_url, category, published_at, updated_at')
     .eq('id', id)
     .eq('is_published', true)
     .maybeSingle()
 
   if (!data) {
-    return {
-      title: '인사이트 | TechEdu Insight',
-      description: '테크·교육 관련 외부 기사 큐레이션.',
-    }
+    return buildPrivatePageMetadata({
+      title: '인사이트',
+      description: '요청하신 인사이트를 찾을 수 없습니다.',
+    })
   }
 
-  const row = data as Pick<EduInsight, 'title' | 'summary'>
+  const row = data as Pick<
+    EduInsight,
+    'title' | 'summary' | 'image_url' | 'category' | 'published_at' | 'updated_at'
+  >
   const summaryTrim = row.summary?.trim() ?? ''
   const description =
     summaryTrim.length > 0
       ? summaryTrim.slice(0, 160) + (summaryTrim.length > 160 ? '…' : '')
       : '원문은 외부 사이트에서 확인할 수 있습니다.'
 
-  return {
-    title: `${row.title} | TechEdu Insight`,
+  const extra = row.category?.trim() ? [row.category.trim()] : []
+
+  return buildPublicPageMetadata({
+    title: row.title,
     description,
-  }
+    path: `/insights/${id}`,
+    ogImage: row.image_url,
+    ogType: 'article',
+    article: {
+      publishedTime: row.published_at,
+      modifiedTime: row.updated_at,
+    },
+    extraKeywords: extra,
+    useTitleTemplate: true,
+  })
 }
 
 export default async function InsightDetailPage({ params }: PageProps) {

@@ -5,6 +5,7 @@ import Navbar from '@/app/components/Navbar'
 import Footer from '@/app/components/Footer'
 import { ThirdPartyScripts } from '@/app/components/ThirdPartyScripts'
 import { SupabaseBrowserProvider } from '@/app/components/SupabaseBrowserProvider'
+import { SEO_KEYWORDS_BASE } from '@/app/lib/seo'
 import { getMetadataBase } from '@/app/lib/site-metadata'
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/app/lib/supabase/env'
 import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
@@ -43,6 +44,9 @@ export const metadata: Metadata = {
   applicationName: 'TechEdu Insight',
   title: { default: 'TechEdu Insight', template: '%s | TechEdu Insight' },
   description: siteDescription,
+  keywords: [...SEO_KEYWORDS_BASE],
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  referrer: 'origin-when-cross-origin',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

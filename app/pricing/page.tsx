@@ -1,4 +1,14 @@
 import Link from 'next/link'
+import { buildPublicPageMetadata } from '@/app/lib/seo'
+
+export const metadata = buildPublicPageMetadata({
+  title: '멤버십·이용 안내',
+  description:
+    'TechEdu Insight PREMIUM 멤버십 안내. 바이트코딩 강의·Edutech 학습 콘텐츠 이용을 위해 관리자에게 문의하세요.',
+  path: '/pricing',
+  extraKeywords: ['PREMIUM', '멤버십', '이용 안내'],
+  useTitleTemplate: true,
+})
 
 export default function PricingPage() {
   return (

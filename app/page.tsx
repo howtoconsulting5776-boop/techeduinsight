@@ -2,6 +2,17 @@ import { LandingSectionHeader } from '@/app/components/landing/LandingSectionHea
 import { getCachedSupabaseAuth } from '@/app/lib/supabase/server'
 import ProjectGallery from '@/app/components/ProjectGallery'
 import { getShowcaseGalleryItems } from '@/app/lib/showcase-gallery-data'
+import { buildPublicPageMetadata } from '@/app/lib/seo'
+
+export const metadata = buildPublicPageMetadata({
+  title:
+    'TechEdu Insight — Edutech·AI 프로젝트 쇼케이스 & 바이트코딩 강의',
+  description:
+    'Edutech 플랫폼 TechEdu Insight. AI·진로·입시에 맞춘 공개 프로젝트 쇼케이스, 바이브코딩·바이트코딩 스타일 강의, 교육 인사이트를 제공합니다.',
+  path: '/',
+  extraKeywords: ['프로젝트 쇼케이스', '온라인 강의', 'TechEdu'],
+  useTitleTemplate: false,
+})
 
 export default async function HomePage() {
   const { supabase, user } = await getCachedSupabaseAuth()
